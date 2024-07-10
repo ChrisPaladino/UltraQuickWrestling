@@ -1,0 +1,58 @@
+{
+    "wrestlers": [
+      {
+        "name": "Ric Flair",
+        "age": 42,
+        "height": "6'1\"",
+        "weight": 243,
+        "hometown": "Charlotte, North Carolina",
+        "persona": "HEEL",
+        "finishingMove": "Figure 4 Leglock",
+        "attributes": {
+          "size": 0,
+          "speed": 25,
+          "strength": 0,
+          "savvy": 100,
+          "cheating": 100,
+          "tech": 25
+        },
+        "specialtyMatches": {
+          "cage": 50,
+          "object": 50,
+          "brawl": 50,
+          "ladder": 25,
+          "table": 25
+        },
+        "tagTeam": 50,
+        "overall": 2550,
+        "heat": 0
+      },
+      {
+        "name": "Hulk Hogan",
+        "age": 38,
+        "height": "6'7\"",
+        "weight": 302,
+        "hometown": "Venice Beach, California",
+        "persona": "FACE",
+        "finishingMove": "Leg Drop",
+        "attributes": {
+          "size": 25,
+          "speed": -25,
+          "strength": 100,
+          "savvy": 0,
+          "cheating": 25,
+          "tech": 0
+        },
+        "specialtyMatches": {
+          "cage": 50,
+          "object": 50,
+          "brawl": 50,
+          "ladder": 0,
+          "table": 50
+        },
+        "tagTeam": 0,
+        "overall": 2425,
+        "heat": 0
+      }
+    ]
+  }
