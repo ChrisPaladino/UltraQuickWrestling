@@ -1,0 +1,129 @@
+{
+  "results": [
+    {
+      "roll": "01-04",
+      "event": "Power failure!! The lights go out mid-match, cancelling match and the remainder of the evening's card.",
+      "effect": {"type": "cancel_match", "additional": "cancel_card"}
+    },
+    {
+      "roll": "05-08",
+      "event": "Wrestler with highest Technical Rating pulls a move never-before-seen, pinning opponent.",
+      "effect": {"type": "technical_win", "condition": "highest_technical_rating"}
+    },
+    {
+      "roll": "09-12",
+      "event": "Both wrestlers go out of ring and take the match into various corners of the arena before both being disqualified. Each wrestler, however, earns +1 to their Heat.",
+      "effect": {"type": "double_dq", "heat_change": 1}
+    },
+    {
+      "roll": "13-16",
+      "event": "OOPS!! Balloon and confetti drop malfunctions and drops during match. -1 Heat to both wrestlers.",
+      "effect": {"type": "heat_change", "value": -1, "target": "both"}
+    },
+    {
+      "roll": "17-20",
+      "event": "Technical difficulties!! TV/PPV coverage goes dark … matches go on, but all wrestlers involved receive a -1 to their Heat.",
+      "effect": {"type": "heat_change", "value": -1, "target": "both"}
+    },
+    {
+      "roll": "21-24",
+      "event": "Wrestlers butt heads and knock each other out cold. Both fail to make count for a double count-out.",
+      "effect": {"type": "double_count_out"}
+    },
+    {
+      "roll": "25-28",
+      "event": "Equipment failure!! Turnbuckle padding comes undone during match. Heel slams Face into exposed metal, Face is out 4 weeks with a facial injury.",
+      "effect": {"type": "injury", "target": "FACE", "duration": 4, "winner": "HEEL"}
+    },
+    {
+      "roll": "29-32",
+      "event": "Face distracted by presence of Heel Gang stationed around the ring. -2 Heat to Face.",
+      "effect": {"type": "heat_change", "value": -2, "target": "FACE"}
+    },
+    {
+      "roll": "33-36",
+      "event": "Wrestler with higher Savvy Rating tricks opponent into move that disqualifies opponent.",
+      "effect": {"type": "savvy_win", "condition": "highest_savvy_rating"}
+    },
+    {
+      "roll": "37-40",
+      "event": "One of wrestling's greats appears mid-match to take over refereeing duties. Both wrestlers receive a +1 to their Heat.",
+      "effect": {"type": "heat_change", "value": 1, "target": "both"}
+    },
+    {
+      "roll": "41-44",
+      "event": "Although it seems like something strange is about to happen, nothing interrupts the match.",
+      "effect": null
+    },
+    {
+      "roll": "45-48",
+      "event": "Commissioner stops the match, announces that the match is now a Contract Ladder Match for the right to have the next shot at the Championship.",
+      "effect": {"type": "change_match_type", "new_type": "Contract Ladder Match"}
+    },
+    {
+      "roll": "49-52",
+      "event": "Although it seems like something strange is about to happen, nothing interrupts the match.",
+      "effect": null
+    },
+    {
+      "roll": "53-56",
+      "event": "Wrestler with higher Strength Rating piledrives and injures foe. Stronger wrestler pins, loser out 3 months.",
+      "effect": {"type": "strength_win", "condition": "highest_strength_rating", "injury_duration": 12}
+    },
+    {
+      "roll": "57-60",
+      "event": "Heel distracted by taunting from Face fans sitting in front rows. -2 Heat to Heel.",
+      "effect": {"type": "heat_change", "value": -2, "target": "HEEL"}
+    },
+    {
+      "roll": "61-64",
+      "event": "Although it seems like something strange is about to happen, nothing interrupts the match.",
+      "effect": null
+    },
+    {
+      "roll": "65-68",
+      "event": "Riot!! Fans become riled when concession stands run out of beer, start pelting the ring with debris. Match and remainder of the card is cancelled for the wrestlers' safety.",
+      "effect": {"type": "cancel_match", "additional": "cancel_card"}
+    },
+    {
+      "roll": "69-72",
+      "event": "Although it seems like something strange is about to happen, nothing interrupts the match.",
+      "effect": null
+    },
+    {
+      "roll": "73-76",
+      "event": "Heel Heat enters ring and attempts to attack Face with object. However, object hits both Face and Heel, knocking them both out. Double count-out.",
+      "effect": {"type": "double_count_out"}
+    },
+    {
+      "roll": "77-80",
+      "event": "Equipment failure!! Top rope snaps loose during Heel catapault move, causing Heel to tumble out of the ring, injuring leg and missing 5 weeks.",
+      "effect": {"type": "injury", "target": "HEEL", "duration": 5, "winner": "FACE"}
+    },
+    {
+      "roll": "81-84",
+      "event": "Celebrity sitting ringside becomes upset with Heel's tactics, enters ring. Heel bodyslams celebrity and throws them from the ring. Continue match as normal.",
+      "effect": {"type": "celebrity_interference", "target": "HEEL"}
+    },
+    {
+      "roll": "85-88",
+      "event": "OOPS!! Pyrotechnic display goes off during match, showering ring with sparks, injuring both wrestlers, who will miss 1 week's action.",
+      "effect": {"type": "injury", "target": "both", "duration": 1}
+    },
+    {
+      "roll": "89-92",
+      "event": "Wrestler with greater number of Heat Points gets the crowd going. +5 Heat for that wrestler.",
+      "effect": {"type": "heat_change", "value": 5, "condition": "highest_heat"}
+    },
+    {
+      "roll": "93-96",
+      "event": "Conspiracy!! Heel conspires with Face to lose match, setting up future title bout for Face.",
+      "effect": {"type": "conspiracy_win", "winner": "FACE", "future_match": "title_bout"}
+    },
+    {
+      "roll": "97-00",
+      "event": "Ring collapses!!! Both wrestlers and referee are injured and out of action for 2 months. Remaining action on tonight's card is cancelled.",
+      "effect": {"type": "cancel_match", "additional": "cancel_card", "injury": {"target": "both", "duration": 8}}
+    }
+  ]
+}

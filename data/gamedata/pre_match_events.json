@@ -1,0 +1,256 @@
+{
+    "Face": [
+      {
+        "roll": "01-04",
+        "event": "Fans Love Gimmick",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": 30, "duration": "This match only"}
+      },
+      {
+        "roll": "05-08",
+        "event": "Becomes Instant Crowd Favorite",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": 30, "duration": "Permanently"}
+      },
+      {
+        "roll": "09-12",
+        "event": "Cuts a Brilliant Promo",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": 1}
+      },
+      {
+        "roll": "13-16",
+        "event": "Sneak Attack By Heel Backfires",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": 100, "duration": "This match only"}
+      },
+      {
+        "roll": "17-20",
+        "event": "Opponent and #1 Heel Attack",
+        "effect": "Match becomes Tag Match"
+      },
+      {
+        "roll": "21-24",
+        "event": "Savagely Attacked By Heel",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -100, "duration": "This match only"}
+      },
+      {
+        "roll": "25-28",
+        "event": "Crowd is Luke Warm",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -30, "duration": "This match only"}
+      },
+      {
+        "roll": "29-32",
+        "event": "Butchers Promo",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": -1}
+      },
+      {
+        "roll": "33-36",
+        "event": "Fans Hate Gimmick",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -50}
+      },
+      {
+        "roll": "37-40",
+        "event": "#4 Heel Interrupts Promo",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": -1}
+      },
+      {
+        "roll": "41-44",
+        "event": "Opponent and #3 Heel Attack",
+        "effect": "Match becomes Tag Match"
+      },
+      {
+        "roll": "45-48",
+        "event": "Normal Match",
+        "effect": null
+      },
+      {
+        "roll": "49-52",
+        "event": "#5 Heel Attacks During Interview with Chair",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -200, "duration": "This match only"}
+      },
+      {
+        "roll": "53-56",
+        "event": "Heel Distracted By Crowd",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": 50, "duration": "This match only"}
+      },
+      {
+        "roll": "57-60",
+        "event": "Fooled By Heel Handshake; Heel Body slams",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -30, "duration": "This match only"}
+      },
+      {
+        "roll": "61-64",
+        "event": "Normal Match",
+        "effect": null
+      },
+      {
+        "roll": "65-68",
+        "event": "Famous Celebrity Escorts to Ring",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": 1}
+      },
+      {
+        "roll": "69-72",
+        "event": "Angered Fan Enters Ring and Kicks Heel",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": 100}
+      },
+      {
+        "roll": "73-76",
+        "event": "Normal Match",
+        "effect": null
+      },
+      {
+        "roll": "77-80",
+        "event": "#9 Heel Interferes; Commish Makes it a Tag Match (Choice of Partner)",
+        "effect": "Match becomes Tag Match"
+      },
+      {
+        "roll": "81-84",
+        "event": "Fans Love Your Entrance Music",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": 1}
+      },
+      {
+        "roll": "85-88",
+        "event": "Normal Match",
+        "effect": null
+      },
+      {
+        "roll": "89-92",
+        "event": "#7 Heel Performs Finisher on Ramp; Can't Make it to Ring DQ",
+        "effect": "Heel disqualified"
+      },
+      {
+        "roll": "93-96",
+        "event": "Heel Attacks Old Lady in Stands; Face comes to Aid",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": 2}
+      },
+      {
+        "roll": "97-00",
+        "event": "Fans Like Your New Catch-Phrase",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": 1}
+      }
+    ],
+    "Heel": [
+      {
+        "roll": "01-04",
+        "event": "Heel cuts a terrific promo",
+        "effect": {"target": "HEEL", "attribute": "Overall", "change": 100, "duration": "This match only"}
+      },
+      {
+        "roll": "05-08",
+        "event": "While being interviewed, Heel is challenged to a cage match by Face Heat",
+        "effect": {"target": "HEEL", "attribute": "Heat", "change": 1}
+      },
+      {
+        "roll": "09-12",
+        "event": "Heel pummels Face with an object during Face's interview",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -200, "duration": "This match only"}
+      },
+      {
+        "roll": "13-16",
+        "event": "Face Heat intervenes to stop attack by Heel, then smacks Heel around on live TV",
+        "effect": {"target": "HEEL", "attribute": "Overall", "change": -200, "duration": "This match only"}
+      },
+      {
+        "roll": "17-20",
+        "event": "Face Heat tag team member feels slighted in interview with partner",
+        "effect": "Face Heat tag team -100 next match. Team splits up if they lose."
+      },
+      {
+        "roll": "21-24",
+        "event": "Heel interrupts interview with Face to offer allegations against Face",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -100, "duration": "This match only"}
+      },
+      {
+        "roll": "25-28",
+        "event": "Heel Heat and Heel Heat double-team Face during interview",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -50, "duration": "This match only"}
+      },
+      {
+        "roll": "29-32",
+        "event": "New wrestler introduced by Heel. New wrestler becomes Heel",
+        "effect": {"target": "HEEL", "attribute": "Heat", "change": 2}
+      },
+      {
+        "roll": "33-36",
+        "event": "Heel Heat changes cue cards, causing Face to look foolish during interview",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": -1}
+      },
+      {
+        "roll": "37-40",
+        "event": "Face interview interrupted by Heel Heat, who starts promoting own upcoming match",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": -1}
+      },
+      {
+        "roll": "41-44",
+        "event": "Face in excellent promo",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": 100, "duration": "This match only"}
+      },
+      {
+        "roll": "45-48",
+        "event": "While being interviewed, Face is challenged to a cage match by Heel Heat",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": 1}
+      },
+      {
+        "roll": "49-52",
+        "event": "Despite the heated exchanges during the interviews, nothing happens to change the match conditions",
+        "effect": null
+      },
+      {
+        "roll": "53-56",
+        "event": "Heel suffers injury From Body Slam",
+        "effect": {"target": "HEEL", "attribute": "Overall", "change": -300, "duration": "This match only"}
+      },
+      {
+        "roll": "57-60",
+        "event": "Normal Match",
+        "effect": null
+      },
+      {
+        "roll": "61-64",
+        "event": "Fans Distract Heel",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": 50, "duration": "This match only"}
+      },
+      {
+        "roll": "65-68",
+        "event": "Spattering of Boos as Face enters Ring",
+        "effect": {"target": "FACE", "attribute": "Heat", "change": -1}
+      },
+      {
+        "roll": "69-72",
+        "event": "#10 Heel Trips Face on Ramp",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -50, "duration": "This match only"}
+      },
+      {
+        "roll": "73-76",
+        "event": "#6 Heel Runs In; Double-Teams",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -100, "duration": "This match only"}
+      },
+      {
+        "roll": "77-80",
+        "event": "Opponent Beats Repeatedly with Foreign Object",
+        "effect": {"target": "FACE", "attribute": "Overall", "change": -100, "duration": "This match only"}
+      },
+      {
+        "roll": "81-84",
+        "event": "Retired Wrestler Offers Advice",
+        "effect": {"target": "HEEL", "attribute": "Overall", "change": 50, "duration": "This match only"}
+      },
+      {
+        "roll": "85-88",
+        "event": "Normal Match",
+        "effect": null
+      },
+      {
+        "roll": "89-92",
+        "event": "#1 Face Prevents Sneak Attack; Match Becomes Tag Match",
+        "effect": "Match becomes Tag Match"
+      },
+    {
+        "roll": "93-96",
+        "event": "Fans Show No Reaction",
+        "effect": {"target": "HEEL", "attribute": "Heat", "change": -1}
+      },
+      {
+        "roll": "97-00",
+        "event": "Normal Match",
+        "effect": null
+      }
+    ]
+}

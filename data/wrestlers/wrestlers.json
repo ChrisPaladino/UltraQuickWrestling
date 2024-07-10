@@ -1,0 +1,67 @@
+{
+  "wrestlers": [
+    {
+      "name": "Ric Flair",
+      "persona": "Heel",
+      "finisher": "Figure 4 Leglock",
+      "overall": 2550,
+      "heat": 0,
+      "attributes": {
+        "size": 0,
+        "speed": 25,
+        "strength": 0,
+        "savvy": 100,
+        "cheating": 100,
+        "tech": 25,
+        "cage": 50,
+        "object": 50,
+        "brawl": 50,
+        "ladder": 25,
+        "table": 25,
+        "tag": 50
+      }
+    },
+    {
+      "name": "Hulk Hogan",
+      "persona": "Face",
+      "finisher": "Leg Drop",
+      "overall": 2425,
+      "heat": 0,
+      "attributes": {
+        "size": 25,
+        "speed": -50,
+        "strength": 50,
+        "savvy": 50,
+        "cheating": -100,
+        "tech": -50,
+        "cage": 50,
+        "object": 50,
+        "brawl": 50,
+        "ladder": -50,
+        "table": 25,
+        "tag": 50
+      }
+    },
+      {
+        "name": "Ultimate Warrior",
+        "persona": "Face",
+        "finisher": "Ultimate Press Slam",
+        "overall": 2450,
+        "heat": 0,
+        "attributes": {
+          "size": 25,
+          "speed": 0,
+          "strength": 50,
+          "savvy": 0,
+          "cheating": -50,
+          "tech": -50,
+          "cage": 25,
+          "object": 10,
+          "brawl": 50,
+          "ladder": 0,
+          "table": 0,
+          "tag": 50
+        }
+    }
+  ]
+}

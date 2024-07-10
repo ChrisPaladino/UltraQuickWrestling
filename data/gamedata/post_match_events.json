@@ -1,0 +1,46 @@
+{
+    "winner": [
+      {
+        "roll": "01-83",
+        "event": "Clean Pin fall via Finisher",
+        "effect": {"type": "heat_change", "value": 1}
+      },
+      {
+        "roll": "84-88",
+        "event": "Win via Submission",
+        "effect": {"type": "heat_change", "value": 1}
+      },
+      {
+        "roll": "89-91",
+        "event": "Clean Pin fall via Finisher",
+        "effect": {"type": "heat_change", "value": 1}
+      },
+      {
+        "roll": "92-96",
+        "event": "Win via Submission",
+        "effect": {"type": "heat_change", "value": 1}
+      },
+      {
+        "roll": "97-100",
+        "event": "Go To Unusual Results",
+        "effect": {"type": "unusual_result"}
+      }
+    ],
+    "loser": [
+      {
+        "roll": "01-60",
+        "event": "Clean Pin fall via Finisher",
+        "effect": {"type": "heat_change", "value": -1}
+      },
+      {
+        "roll": "61-65",
+        "event": "Win via Submission",
+        "effect": {"type": "heat_change", "value": -1}
+      },
+      {
+        "roll": "66-100",
+        "event": "Opponent DQ'd for Illegal Tactics",
+        "effect": {"type": "heat_change", "value": 0}
+      }
+    ]
+  }
