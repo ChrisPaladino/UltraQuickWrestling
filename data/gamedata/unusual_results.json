@@ -1,129 +1,504 @@
 {
   "results": [
     {
-      "roll": "01-04",
-      "event": "Power failure!! The lights go out mid-match, cancelling match and the remainder of the evening's card.",
-      "effect": {"type": "cancel_match", "additional": "cancel_card"}
+      "roll": "01",
+      "event": "Immediately Following Match Heel Leaves Fed. May Not Return for 1 Year",
+      "effect": {"type": "wrestler_leaves", "target": "HEEL", "duration": 12}
     },
     {
-      "roll": "05-08",
-      "event": "Wrestler with highest Technical Rating pulls a move never-before-seen, pinning opponent.",
-      "effect": {"type": "technical_win", "condition": "highest_technical_rating"}
+      "roll": "02",
+      "event": "Face #1 Makes Save, DDT's Heel. Face Wins by Pin fall",
+      "effect": {"type": "interference", "winner": "FACE"}
     },
     {
-      "roll": "09-12",
-      "event": "Both wrestlers go out of ring and take the match into various corners of the arena before both being disqualified. Each wrestler, however, earns +1 to their Heat.",
-      "effect": {"type": "double_dq", "heat_change": 1}
+      "roll": "03",
+      "event": "Entrance Pyro Malfunctions. Heel Injured for 3 Months",
+      "effect": {"type": "injury", "target": "HEEL", "duration": 3}
     },
     {
-      "roll": "13-16",
-      "event": "OOPS!! Balloon and confetti drop malfunctions and drops during match. -1 Heat to both wrestlers.",
-      "effect": {"type": "heat_change", "value": -1, "target": "both"}
+      "roll": "04",
+      "event": "Heel #1 Distracts Referee. Heel Uses Object on Face; Makes Pin",
+      "effect": {"type": "interference", "winner": "HEEL"}
     },
     {
-      "roll": "17-20",
-      "event": "Technical difficulties!! TV/PPV coverage goes dark … matches go on, but all wrestlers involved receive a -1 to their Heat.",
-      "effect": {"type": "heat_change", "value": -1, "target": "both"}
+      "roll": "05",
+      "event": "Fans Revolt After Heel Win. All other Matches Cancelled",
+      "effect": {"type": "event_cancelled"}
     },
     {
-      "roll": "21-24",
-      "event": "Wrestlers butt heads and knock each other out cold. Both fail to make count for a double count-out.",
-      "effect": {"type": "double_count_out"}
+      "roll": "06",
+      "event": "Heel Uses Ropes for Leverage. Scores Pin fall",
+      "effect": {"type": "cheating_win", "winner": "HEEL"}
     },
     {
-      "roll": "25-28",
-      "event": "Equipment failure!! Turnbuckle padding comes undone during match. Heel slams Face into exposed metal, Face is out 4 weeks with a facial injury.",
-      "effect": {"type": "injury", "target": "FACE", "duration": 4, "winner": "HEEL"}
+      "roll": "07",
+      "event": "Heel Shows Remorse for Bad Actions. Loses Match, Turns Face",
+      "effect": {"type": "persona_change", "target": "HEEL", "new_persona": "FACE"}
     },
     {
-      "roll": "29-32",
-      "event": "Face distracted by presence of Heel Gang stationed around the ring. -2 Heat to Face.",
-      "effect": {"type": "heat_change", "value": -2, "target": "FACE"}
+      "roll": "08",
+      "event": "Heel Slams Face Through Ring. Wins by Count out",
+      "effect": {"type": "count_out", "winner": "HEEL"}
     },
     {
-      "roll": "33-36",
-      "event": "Wrestler with higher Savvy Rating tricks opponent into move that disqualifies opponent.",
-      "effect": {"type": "savvy_win", "condition": "highest_savvy_rating"}
+      "roll": "09",
+      "event": "Face #2 trips Heel. Face Makes Pin.",
+      "effect": {"type": "interference", "winner": "FACE"}
     },
     {
-      "roll": "37-40",
-      "event": "One of wrestling's greats appears mid-match to take over refereeing duties. Both wrestlers receive a +1 to their Heat.",
-      "effect": {"type": "heat_change", "value": 1, "target": "both"}
+      "roll": "10",
+      "event": "Ring Collapses. Both Wrestlers Injured for 2 Months",
+      "effect": {"type": "injury", "target": "BOTH", "duration": 2}
     },
     {
-      "roll": "41-44",
-      "event": "Although it seems like something strange is about to happen, nothing interrupts the match.",
-      "effect": null
+      "roll": "11",
+      "event": "Face's Ally Interferes. Commish Makes it a Tag Match",
+      "effect": {"type": "match_type_change", "new_type": "TAG"}
     },
     {
-      "roll": "45-48",
-      "event": "Commissioner stops the match, announces that the match is now a Contract Ladder Match for the right to have the next shot at the Championship.",
-      "effect": {"type": "change_match_type", "new_type": "Contract Ladder Match"}
+      "roll": "12",
+      "event": "Face Loses Match. Hires Manager and Turn Heel.",
+      "effect": {"type": "persona_change", "target": "FACE", "new_persona": "HEEL"}
     },
     {
-      "roll": "49-52",
-      "event": "Although it seems like something strange is about to happen, nothing interrupts the match.",
-      "effect": null
+      "roll": "13",
+      "event": "Face's Ally turns on Face. Heel Wins. Ally Turns Heel",
+      "effect": {"type": "betrayal", "winner": "HEEL"}
     },
     {
-      "roll": "53-56",
-      "event": "Wrestler with higher Strength Rating piledrives and injures foe. Stronger wrestler pins, loser out 3 months.",
-      "effect": {"type": "strength_win", "condition": "highest_strength_rating", "injury_duration": 12}
+      "roll": "14",
+      "event": "Face Takes Heel's Object. Ko's Heel. Ref makes Count. Face Wins",
+      "effect": {"type": "object_backfire", "winner": "FACE"}
     },
     {
-      "roll": "57-60",
-      "event": "Heel distracted by taunting from Face fans sitting in front rows. -2 Heat to Heel.",
-      "effect": {"type": "heat_change", "value": -2, "target": "HEEL"}
+      "roll": "15",
+      "event": "Heel Gang Interrupts Match. DQ! Face Turns Heel and Joins Gang",
+      "effect": {"type": "dq_persona_change", "winner": "FACE", "target": "FACE", "new_persona": "HEEL"}
     },
     {
-      "roll": "61-64",
-      "event": "Although it seems like something strange is about to happen, nothing interrupts the match.",
-      "effect": null
+      "roll": "16",
+      "event": "Face #3 Prevents Heel from Using Chair. Normal Match",
+      "effect": {"type": "interference_prevented"}
     },
     {
-      "roll": "65-68",
-      "event": "Riot!! Fans become riled when concession stands run out of beer, start pelting the ring with debris. Match and remainder of the card is cancelled for the wrestlers' safety.",
-      "effect": {"type": "cancel_match", "additional": "cancel_card"}
+      "roll": "17",
+      "event": "Face Slams Heel Through Announce Table for Win. Heel Injured 3 Weeks",
+      "effect": {"type": "injury_win", "winner": "FACE", "target": "HEEL", "duration": 0.75}
     },
     {
-      "roll": "69-72",
-      "event": "Although it seems like something strange is about to happen, nothing interrupts the match.",
-      "effect": null
+      "roll": "18",
+      "event": "Heel Throws Fireball at Face. Face Injured 1 month",
+      "effect": {"type": "injury", "target": "FACE", "duration": 1}
     },
     {
-      "roll": "73-76",
-      "event": "Heel Heat enters ring and attempts to attack Face with object. However, object hits both Face and Heel, knocking them both out. Double count-out.",
-      "effect": {"type": "double_count_out"}
+      "roll": "19",
+      "event": "Commish Stops Match. Announces Loser Leaves Town.",
+      "effect": {"type": "stipulation_added", "stipulation": "LOSER_LEAVES_TOWN"}
     },
     {
-      "roll": "77-80",
-      "event": "Equipment failure!! Top rope snaps loose during Heel catapault move, causing Heel to tumble out of the ring, injuring leg and missing 5 weeks.",
-      "effect": {"type": "injury", "target": "HEEL", "duration": 5, "winner": "FACE"}
+      "roll": "20",
+      "event": "Face #4 Comes to Aid of Face. DQ. Heel Injured 2 weeks from Attack",
+      "effect": {"type": "dq_injury", "winner": "HEEL", "target": "HEEL", "duration": 0.5}
     },
     {
-      "roll": "81-84",
-      "event": "Celebrity sitting ringside becomes upset with Heel's tactics, enters ring. Heel bodyslams celebrity and throws them from the ring. Continue match as normal.",
-      "effect": {"type": "celebrity_interference", "target": "HEEL"}
+      "roll": "21",
+      "event": "Heel #4 Double teams Face. DQ!",
+      "effect": {"type": "dq", "winner": "FACE"}
     },
     {
-      "roll": "85-88",
-      "event": "OOPS!! Pyrotechnic display goes off during match, showering ring with sparks, injuring both wrestlers, who will miss 1 week's action.",
-      "effect": {"type": "injury", "target": "both", "duration": 1}
+      "roll": "22",
+      "event": "New Wrestler Runs-In, Flattens Heel and Face. No Contest",
+      "effect": {"type": "no_contest"}
     },
     {
-      "roll": "89-92",
-      "event": "Wrestler with greater number of Heat Points gets the crowd going. +5 Heat for that wrestler.",
-      "effect": {"type": "heat_change", "value": 5, "condition": "highest_heat"}
+      "roll": "23",
+      "event": "Wrestlers Fight to Outside Arena. Oncoming Car Hits Heel. Heel injured 2 months",
+      "effect": {"type": "injury", "target": "HEEL", "duration": 2}
     },
     {
-      "roll": "93-96",
-      "event": "Conspiracy!! Heel conspires with Face to lose match, setting up future title bout for Face.",
-      "effect": {"type": "conspiracy_win", "winner": "FACE", "future_match": "title_bout"}
+      "roll": "24",
+      "event": "Wrestler's Fight To back Stage Area. Double DQ",
+      "effect": {"type": "double_dq"}
     },
     {
-      "roll": "97-00",
-      "event": "Ring collapses!!! Both wrestlers and referee are injured and out of action for 2 months. Remaining action on tonight's card is cancelled.",
-      "effect": {"type": "cancel_match", "additional": "cancel_card", "injury": {"target": "both", "duration": 8}}
+      "roll": "25",
+      "event": "Heel Misses Flying Head butt. Injured 3 weeks.",
+      "effect": {"type": "self_injury", "target": "HEEL", "duration": 0.75}
+    },
+    {
+      "roll": "26",
+      "event": "Heel Misses Suicide Dive. Injured for 1 Year.",
+      "effect": {"type": "self_injury", "target": "HEEL", "duration": 12}
+    },
+    {
+      "roll": "27",
+      "event": "Heel Loses Match. Beats Face with Chair following Match",
+      "effect": {"type": "post_match_attack", "attacker": "HEEL", "target": "FACE"}
+    },
+    {
+      "roll": "28",
+      "event": "Heel #6 knocks Face in Knee with Tire Iron. Heel Makes Pin. Face Injured 1 month",
+      "effect": {"type": "interference_injury", "winner": "HEEL", "target": "FACE", "duration": 1}
+    },
+    {
+      "roll": "29",
+      "event": "Face's Girlfriend Falls for Heel. Sprays Perfume in Face's Eyes. Heel Wins",
+      "effect": {"type": "betrayal", "winner": "HEEL"}
+    },
+    {
+      "roll": "30",
+      "event": "Commish Stops Match. Announces it is now a Ladder Match",
+      "effect": {"type": "match_type_change", "new_type": "LADDER"}
+    },
+    {
+      "roll": "31",
+      "event": "Horrible Fall From Entrance Ramp. Both Wrestlers Injured for 3 months",
+      "effect": {"type": "injury", "target": "BOTH", "duration": 3}
+    },
+    {
+      "roll": "32",
+      "event": "Heel Ko's Ref. Brutally Beats Face. DQ. Face Injured 2 weeks",
+      "effect": {"type": "dq_injury", "winner": "FACE", "target": "FACE", "duration": 0.5}
+    },
+    {
+      "roll": "33",
+      "event": "Referee bribed by Heel. Fast Count on Face. Heel Wins",
+      "effect": {"type": "cheating_win", "winner": "HEEL"}
+    },
+    {
+      "roll": "34",
+      "event": "Heel's Mother Says She Didn't Raise a Cheater. Slaps Heel. Face Wins",
+      "effect": {"type": "interference", "winner": "FACE"}
+    },
+    {
+      "roll": "35",
+      "event": "New Heel Wrestler Blindsides Face with Chair shot. Heel By Pin fall",
+      "effect": {"type": "interference", "winner": "HEEL"}
+    },
+    {
+      "roll": "36",
+      "event": "Special Referee, Ex-Football Star Clocks Heel. Face Wins",
+      "effect": {"type": "referee_interference", "winner": "FACE"}
+    },
+    {
+      "roll": "37",
+      "event": "Face #10 Aids Face. Heel smashes both with a chair. DQ",
+      "effect": {"type": "dq", "winner": "FACE"}
+    },
+    {
+      "roll": "38",
+      "event": "New Tag-Team Enters Ring Flattens Face and Heel. No Contest",
+      "effect": {"type": "no_contest"}
+    },
+    {
+      "roll": "39",
+      "event": "Obese Fan Attacks Heel and Suffers Heart Attack. Remainder of Event Cancelled",
+      "effect": {"type": "event_cancelled"}
+    },
+    {
+      "roll": "40",
+      "event": "Face Offered Movie Deal. Leaves Wrestling for 6 Months after Match",
+      "effect": {"type": "wrestler_leaves", "target": "FACE", "duration": 6}
+    },
+    {
+      "roll": "41",
+      "event": "Supermodel At Ringside Distracts Heel. Face Makes Pin",
+      "effect": {"type": "distraction", "winner": "FACE"}
+    },
+    {
+      "roll": "42",
+      "event": "Heel #8 distracts Ref while Heel uses Object. Heel wins",
+      "effect": {"type": "interference", "winner": "HEEL"}
+    },
+    {
+      "roll": "43",
+      "event": "New Manager Scouts Match. Makes Agreement to Represent Heel",
+      "effect": {"type": "new_manager", "target": "HEEL"}
+    },
+    {
+      "roll": "44",
+      "event": "Ringside Lighting Falls on Face. Face Injured for 1 Month",
+      "effect": {"type": "injury", "target": "FACE", "duration": 1}
+    },
+    {
+      "roll": "45",
+      "event": "Heel #10 Ko's Ref, Brings Heel Ref to Ring for Fast Count",
+      "effect": {"type": "referee_interference", "winner": "HEEL"}
+    },
+    {
+      "roll": "46",
+      "event": "Heel Mis-Executes Piledriver. Face Injured for 1 year",
+      "effect": {"type": "injury", "target": "FACE", "duration": 12}
+    },
+    {
+      "roll": "47",
+      "event": "Face Loses Match; Blames Fans. Turns Heel",
+      "effect": {"type": "persona_change", "target": "FACE", "new_persona": "HEEL"}
+    },
+    {
+      "roll": "48",
+      "event": "Camera Man Accidentally Trips Heel. Face Makes Pin",
+      "effect": {"type": "interference", "winner": "FACE"}
+    },
+    {
+      "roll": "49",
+      "event": "Face #9 Comes to Aid of Face. DQ!",
+      "effect": {"type": "dq", "winner": "HEEL"}
+    },
+    {
+      "roll": "50",
+      "event": "Heel Gang Flattens Face. Heel Wins By Pin",
+      "effect": {"type": "interference", "winner": "HEEL"}
+    },
+    {
+      "roll": "51",
+      "event": "Blatant Choke by Heel. Ref DQ's Heel",
+      "effect": {"type": "dq", "winner": "FACE"}
+    },
+    {
+      "roll": "52",
+      "event": "Heel Suspended by Commish for 6 Months for Using Outlawed Move",
+      "effect": {"type": "suspension", "target": "HEEL", "duration": 6}
+    },
+    {
+      "roll": "53",
+      "event": "Heel uses Sledgehammer on Face. DQ. Face Injured 1 Month",
+      "effect": {"type": "dq_injury", "winner": "FACE", "target": "FACE", "duration": 1}
+    },
+    {
+      "roll": "54",
+      "event": "Heel Wins with Vicious DDT onto Chair. Face Injured 3 weeks",
+      "effect": {"type": "injury_win", "winner": "HEEL", "target": "FACE", "duration": 0.75}
+    },
+    {
+      "roll": "55",
+      "event": "Heel Loses Match Blames (Partner/Manager). Turns Face",
+      "effect": {"type": "persona_change", "target": "HEEL", "new_persona": "FACE"}
+    },
+    {
+      "roll": "56",
+      "event": "Face's Mother Calls Face a Sissy. Helps Heel. Heel wins",
+      "effect": {"type": "interference", "winner": "HEEL"}
+    },
+    {
+      "roll": "57",
+      "event": "New Heel Enters Ring and Uses Finisher on Face. DQ",
+      "effect": {"type": "dq", "winner": "FACE"}
+    },
+    {
+      "roll": "58",
+      "event": "Heel #2 Slams Face on Outside. Throws Him into Ring. Heel Makes Pin fall",
+      "effect": {"type": "interference", "winner": "HEEL"}
+    },
+    {
+      "roll": "59",
+      "event": "Commish Stops Match. Makes it a Cage Match",
+      "effect": {"type": "match_type_change", "new_type": "CAGE"}
+    },
+    {
+      "roll": "60",
+      "event": "Promotion With Dog Goes bad. Dog Bites Both Wrestlers Injured 2 weeks.",
+      "effect": {"type": "injury", "target": "BOTH", "duration": 0.5}
+    },
+    {
+      "roll": "61",
+      "event": "Fan Enters Ring and Smashes Heel with Bottle. Face Wins",
+      "effect": {"type": "interference", "winner": "FACE"}
+    },
+    {
+      "roll": "62",
+      "event": "Face #5 takes Briefcase from Heel. Uses it. DQ. Heel injured 2 weeks",
+      "effect": {"type": "dq_injury", "winner": "HEEL", "target": "HEEL", "duration": 0.5}
+    },
+    {
+      "roll": "63",
+      "event": "Face Loses Control! Slams Referee. DQ. Immediately Turns Heel",
+      "effect": {"type": "dq_persona_change", "winner": "HEEL", "target": "FACE", "new_persona": "HEEL"}
+    },
+    {
+      "roll": "64",
+      "event": "Heel KO'd By Elderly Fan's Cane. No Contest",
+      "effect": {"type": "no_contest"}
+    },
+    {
+      "roll": "65",
+      "event": "Heel Offers Handshake After Winning Match. Turns Face",
+      "effect": {"type": "persona_change", "target": "HEEL", "new_persona": "FACE"}
+    },
+    {
+      "roll": "66",
+      "event": "Heel Leaves Ringside for DQ. Steal's Face's Child from Locker Room",
+      "effect": {"type": "dq_storyline", "winner": "FACE"}
+    },
+    {
+      "roll": "67",
+      "event": "Commish Stops Match. Makes it a Brass Knuckles Match",
+      "effect": {"type": "match_type_change", "new_type": "BRASS_KNUCKLES"}
+    },
+    {
+      "roll": "68",
+      "event": "Heel #3 Throws Salt into Face's Eyes. Heel Uses Finisher and Pin",
+      "effect": {"type": "interference", "winner": "HEEL"}
+    },
+    {
+      "roll": "69",
+      "event": "Both Wrestlers KO'd. Neither Makes Count. Double DQ",
+      "effect": {"type": "double_dq"}
+    },
+    {
+      "roll": "70",
+      "event": "Power Failure. Remainder of Card Cancelled",
+      "effect": {"type": "event_cancelled"}
+    },
+    {
+      "roll": "71",
+      "event": "Commish Rings Bell Early. States that Face Submitted. Heel Wins",
+      "effect": {"type": "referee_interference", "winner": "HEEL"}
+    },
+    {
+      "roll": "72",
+      "event": "Heel's (Manager/Partner) Pummels Heel Causing Loss. Heel Turns Face",
+      "effect": {"type": "betrayal_persona_change", "winner": "FACE", "target": "HEEL", "new_persona": "FACE"}
+    },
+    {
+      "roll": "73",
+      "event": "Heel #5 Slips Heel Roll of Quarters. Heel Uses and Makes Pin",
+      "effect": {"type": "interference", "winner": "HEEL"}
+    },
+    {
+      "roll": "74",
+      "event": "Heel Locks in Figure 4. Face #6 KO's Heel. Face Makes Cover for Win",
+      "effect": {"type": "interference", "winner": "FACE"}
+    },
+    {
+      "roll": "75",
+      "event": "Both Wrestlers Brawl into Crowd. Double DQ",
+      "effect": {"type": "double_dq"}
+    },
+    {
+      "roll": "76",
+      "event": "Heel Injures Knee from Chair Shot. Injured for 6 weeks.",
+      "effect": {"type": "self_injury", "target": "HEEL", "duration": 1.5}
+    },
+    {
+      "roll": "77",
+      "event": "Heel Gang Appears on TV Screen With Face's Wife. Face Leaves Ring for DQ",
+      "effect": {"type": "dq", "winner": "HEEL"}
+    },
+    {
+      "roll": "78",
+      "event": "Commish Nullifies Face Win. Makes Match 2 of 3 falls",
+      "effect": {"type": "match_type_change", "new_type": "TWO_OUT_OF_THREE_FALLS"}
+    },
+    {
+      "roll": "79",
+      "event": "Heel Gang Pummels Heel for Bad Performance. Face Wins",
+      "effect": {"type": "interference", "winner": "FACE"}
+    },
+    {
+      "roll": "80",
+      "event": "Heel #7 Throws Brass Knucks into Ring. Face Grabs Them and KO's Heel.",
+      "effect": {"type": "interference_backfire", "winner": "FACE"}
+    },
+    {
+      "roll": "81",
+      "event": "Face Lands awkward after Flying Elbow. Injured for 6 weeks",
+      "effect": {"type": "self_injury", "target": "FACE", "duration": 1.5}
+    },
+    {
+      "roll": "82",
+      "event": "Heel Secretly Places Steel Under Turnbuckle. Face KO'd",
+      "effect": {"type": "cheating_win", "winner": "HEEL"}
+    },
+    {
+      "roll": "83",
+      "event": "Face #7 Slams Heel on Outside. Throws Heel to Ring. Face Makes Cover",
+      "effect": {"type": "interference", "winner": "FACE"}
+    },
+    {
+      "roll": "84",
+      "event": "New Face Wrestler Pummels Heel During Entrance. No Contest",
+      "effect": {"type": "no_contest"}
+    },
+    {
+      "roll": "85",
+      "event": "Heavyweight Boxing Champ Says Wrestling is Fake. KO's Both Wrestlers",
+      "effect": {"type": "no_contest"}
+    },
+    {
+      "roll": "86",
+      "event": "Face Blocks Heel's Use of Object. Face Uses Object. Ref DQ's Face",
+      "effect": {"type": "dq", "winner": "HEEL"}
+    },
+    {
+      "roll": "87",
+      "event": "Heel Has Loaded Boot. KO's Face",
+      "effect": {"type": "cheating_win", "winner": "HEEL"}
+    },
+    {
+      "roll": "88",
+      "event": "Commish Stops Match. Makes it a No DQ Match",
+      "effect": {"type": "match_type_change", "new_type": "NO_DQ"}
+    },
+    {
+      "roll": "89",
+      "event": "Face Tackles Fan Entering Ring. Heel Clocks Face for Pin",
+      "effect": {"type": "distraction", "winner": "HEEL"}
+    },
+    {
+      "roll": "90",
+      "event": "Retired Legend Grows Tired of Heel's Antics. Delivers DDT. Face Wins",
+      "effect": {"type": "interference", "winner": "FACE"}
+    },
+    {
+      "roll": "91",
+      "event": "Commish Brings New Wrestler to Ringside. KO's Heel and Face",
+      "effect": {"type": "no_contest"}
+    },
+    {
+      "roll": "92",
+      "event": "Referee Stunned as Heel makes Cover. Face #8 KO's Heel. Face Wins by Pin",
+      "effect": {"type": "interference", "winner": "FACE"}
+    },
+    {
+      "roll": "93",
+      "event": "Rival Territory Raids Arena. Heel and Face Join Rival",
+      "effect": {"type": "wrestlers_leave", "target": "BOTH"}
+    },
+    {
+      "roll": "94",
+      "event": "Heel's Ally Changes Ways, Clocks Heel. Face Wins. Ally Turns Face",
+      "effect": {"type": "betrayal_persona_change", "winner": "FACE", "target": "HEEL", "new_persona": "FACE"}
+    },
+    {
+      "roll": "95",
+      "event": "Ringside Fan KO's Heel with Purse. Face Makes Pin",
+      "effect": {"type": "interference", "winner": "FACE"}
+    },
+    {
+      "roll": "96",
+      "event": "Heel #9 Botches Interference. Clocks Heel with Chair. Face by Pin",
+      "effect": {"type": "interference_backfire", "winner": "FACE"}
+    },
+    {
+      "roll": "97",
+      "event": "Barbed Wire Bat Found Under Ring. Heel Uses. DQ. Face Injured 2 weeks",
+      "effect": {"type": "dq_injury", "winner": "FACE", "target": "FACE", "duration": 0.5}
+    },
+    {
+      "roll": "98",
+      "event": "Entrance Ramp Collapses. Face Injured for 3 Months",
+      "effect": {"type": "injury", "target": "FACE", "duration": 3}
+    },
+    {
+      "roll": "99",
+      "event": "Face Mis-TimesPowerbomb. Heel Injured for 4 months",
+      "effect": {"type": "injury", "target": "HEEL", "duration": 4}
+    },
+    {
+      "roll": "100",
+      "event": "Immediately Following Match Face Leaves Fed. May not Return for 1 year",
+      "effect": {"type": "wrestler_leaves", "target": "FACE", "duration": 12}
     }
   ]
 }
