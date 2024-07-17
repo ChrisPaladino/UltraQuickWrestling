@@ -1,3 +1,5 @@
+# Wrestler and Match classes
+
 import random
 
 class Match:
@@ -11,19 +13,16 @@ class Match:
         self.match_modifier = None
         self.log = []
 
-    def run_match(self):
-        self.log.append(f"Match: {self.wrestler1.name} vs {self.wrestler2.name}")
-        self.log.append(f"Match Type: {self.match_type}")
-        
-        self.apply_match_modifier()
-        self.determine_winner()
-        self.determine_result()
-        
-        return self.get_match_summary()
-
     def apply_match_modifier(self):
         self.match_modifier = self.data_manager.get_random_match_modifier()
         self.log.append(f"Match Modifier: {self.match_modifier}")
+
+    def determine_result(self):
+        roll = random.randint(1, 100)
+        self.log.append(f"Result Roll: {roll}")
+        
+        result = self.data_manager.get_result(self.match_type, self.winner.persona, roll)
+        self.log.append(f"Match Result: {result}")
 
     def determine_winner(self):
         w1_score = self.wrestler1.overall + self.wrestler1.get_attribute(self.match_modifier)
@@ -41,12 +40,30 @@ class Match:
         
         self.log.append(f"Winner: {self.winner.name}")
 
-    def determine_result(self):
-        roll = random.randint(1, 100)
-        self.log.append(f"Result Roll: {roll}")
-        
-        result = self.data_manager.get_result(self.match_type, self.winner.persona, roll)
-        self.log.append(f"Match Result: {result}")
-
     def get_match_summary(self):
         return "\n".join(self.log)
+    
+    def run_match(self):
+        self.log.append(f"Match: {self.wrestler1.name} vs {self.wrestler2.name}")
+        self.log.append(f"Match Type: {self.match_type}")
+        
+        self.apply_match_modifier()
+        self.determine_winner()
+        self.determine_result()
+        
+        return self.get_match_summary()
+
+class Wrestler:
+    def __init__(self, data):
+        self.name = data['name']
+        self.persona = data['persona']
+        self.finisher = data['finisher']
+        self.overall = data['overall']
+        self.heat = data.get('heat', 0)
+        self.attributes = data.get('attributes', {})
+
+    def __str__(self):
+        return f"{self.name} ({self.persona})"
+
+    def get_attribute(self, attr):
+        return self.attributes.get(attr.lower(), 0)
