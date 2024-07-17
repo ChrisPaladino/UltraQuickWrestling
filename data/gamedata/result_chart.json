@@ -1,0 +1,14 @@
+{
+    "chart": [
+      {"difference": "150 or Less", "high_rated_wins": "1-51", "low_rated_wins": "52-100"},
+      {"difference": "151-450", "high_rated_wins": "1-59", "low_rated_wins": "60-100"},
+      {"difference": "451-650", "high_rated_wins": "1-65", "low_rated_wins": "66-100"},
+      {"difference": "651-800", "high_rated_wins": "1-70", "low_rated_wins": "71-100"},
+      {"difference": "801-1000", "high_rated_wins": "1-75", "low_rated_wins": "76-100"},
+      {"difference": "1001-1200", "high_rated_wins": "1-80", "low_rated_wins": "81-100"},
+      {"difference": "1201-1400", "high_rated_wins": "1-83", "low_rated_wins": "84-100"},
+      {"difference": "1401-1600", "high_rated_wins": "1-88", "low_rated_wins": "89-100"},
+      {"difference": "1601-1900", "high_rated_wins": "1-91", "low_rated_wins": "92-100"},
+      {"difference": "1901 or More", "high_rated_wins": "1-96", "low_rated_wins": "97-100"}
+    ]
+  }
