@@ -5,7 +5,6 @@
       "persona": "Heel",
       "finisher": "Figure 4 Leglock",
       "overall": 2550,
-      "heat": 0,
       "attributes": {
         "size": 0,
         "speed": 25,
@@ -19,7 +18,16 @@
         "ladder": 25,
         "table": 25,
         "tag": 50
-      }
+      },
+      "image": "RicFlair.webp",
+      "heat": 0,
+      "record": {
+        "wins": 0,
+        "losses": 0,
+        "draws": 0
+      },
+      "injured": false,
+      "injury_duration": 0
     },
     {
       "name": "Hulk Hogan",
@@ -40,7 +48,7 @@
         "table": 25,
         "tag": 50
       },
-      "image": null,
+      "image": "HulkHogan.webp",
       "heat": 0,
       "record": {
         "wins": 0,
@@ -69,7 +77,7 @@
         "table": 0,
         "tag": 50
       },
-      "image": null,
+      "image": "UltimateWarrior.webp",
       "heat": 0,
       "record": {
         "wins": 1,
