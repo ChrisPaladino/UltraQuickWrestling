@@ -5,16 +5,11 @@ import random
 class DataManager:
     def __init__(self, base_path):
         self.base_path = base_path
-        self.wrestlers = self.load_wrestlers()
-        self.match_modifiers = self.load_json('match_modifiers.json').get('modifiers', [])
-        self.pre_match_chart = self.load_json('pre_match_chart.json').get('chart', [])
-        self.pre_match_events = self.load_json('pre_match_events.json')
-        self.win_charts = self.load_json('win_charts.json')
-        self.result_chart = self.load_json('result_chart.json').get('chart', [])
-        self.unusual_results = self.load_json('unusual_results.json').get('results', [])
+        self.wrestlers = self.load_json('wrestlers.json')
+        self.game_data = self.load_json('game_data.json')
 
     def load_json(self, filename):
-        file_path = os.path.join(self.base_path, 'data', 'gamedata', filename)
+        file_path = os.path.join(self.base_path, 'data', filename)
         try:
             with open(file_path, 'r') as file:
                 return json.load(file)
@@ -39,13 +34,11 @@ class DataManager:
             return []
 
     def get_random_match_modifier(self):
-        return random.choice(self.match_modifiers)['modifier']
+        roll = random.randint(0, 9)
+        return next(mod['modifier'] for mod in self.game_data['match_modifiers'] if mod['roll'] == roll)
 
     def get_pre_match_persona(self, roll):
-        for item in self.pre_match_chart:
-            if str(roll) == item['roll']:
-                return item['result']
-        return 'Face'  # Default to Face if no match found
+        return next(item['result'] for item in self.game_data['pre_match_chart'] if item['roll'] == roll)
 
     def get_pre_match_event(self, persona):
         events = self.pre_match_events.get(persona, [])
