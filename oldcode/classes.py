@@ -1,6 +1,36 @@
-# Wrestler and Match classes
+# Classes
 
 import random
+
+class Federation:
+    def __init__(self):
+        self.wrestlers = []
+        self.titles = []
+        self.stables = []
+        self.rankings = {'face': [], 'heel': []}
+
+    def add_wrestler(self, wrestler):
+        self.wrestlers.append(wrestler)
+        self.update_rankings()
+
+    def create_title(self, name):
+        title = Title(name)
+        self.titles.append(title)
+
+    def create_stable(self, name, members):
+        stable = Stable(name, members)
+        self.stables.append(stable)
+
+    def update_rankings(self):
+        # Logic to update rankings based on heat and record
+        pass
+
+    def apply_post_event_changes(self, event):
+        # Logic to apply changes after an event
+        pass
+
+    def get_ranked_wrestler(self, persona, rank):
+        return self.rankings[persona][rank-1] if rank <= len(self.rankings[persona]) else None
 
 class Match:
     def __init__(self, wrestler1, wrestler2, match_type, data_manager):
@@ -112,6 +142,17 @@ class Match:
     def get_match_summary(self):
         return "\n".join(self.log)
 
+class Stable:
+    def __init__(self, name, members=None):
+        self.name = name
+        self.members = members or []
+
+class Title:
+    def __init__(self, name, holder=None, prestige=0):
+        self.name = name
+        self.holder = holder
+        self.prestige = prestige
+
 class Wrestler:
     def __init__(self, data):
         self.name = data['name']
@@ -121,6 +162,9 @@ class Wrestler:
         self.overall = data['overall']
         self.heat = data.get('heat', 0)
         self.temporary_adjustments = {}
+        self.record = {'wins': 0, 'losses': 0, 'draws': 0}
+        self.injured = False
+        self.injury_duration = 0
 
     def adjust_overall(self, change):
         self.overall += change
@@ -141,3 +185,24 @@ class Wrestler:
 
     def reset_temporary_adjustments(self):
         self.temporary_adjustments = {}
+
+    def update_record(self, result):
+        if result == 'win':
+            self.record['wins'] += 1
+        elif result == 'loss':
+            self.record['losses'] += 1
+        else:
+            self.record['draws'] += 1
+
+class WrestlerEditor:
+    def create_wrestler(self, data):
+        # Logic to create a new wrestler
+        pass
+
+    def edit_wrestler(self, wrestler, new_data):
+        # Logic to edit an existing wrestler
+        pass
+
+    def delete_wrestler(self, wrestler):
+        # Logic to delete a wrestler
+        pass

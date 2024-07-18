@@ -26,7 +26,6 @@
       "persona": "Face",
       "finisher": "Leg Drop",
       "overall": 2425,
-      "heat": 0,
       "attributes": {
         "size": 25,
         "speed": -50,
@@ -40,28 +39,45 @@
         "ladder": -50,
         "table": 25,
         "tag": 50
-      }
+      },
+      "image": null,
+      "heat": 0,
+      "record": {
+        "wins": 0,
+        "losses": 1,
+        "draws": 0
+      },
+      "injured": false,
+      "injury_duration": 0
     },
-      {
-        "name": "Ultimate Warrior",
-        "persona": "Face",
-        "finisher": "Ultimate Press Slam",
-        "overall": 2450,
-        "heat": 0,
-        "attributes": {
-          "size": 25,
-          "speed": 0,
-          "strength": 50,
-          "savvy": 0,
-          "cheating": -50,
-          "tech": -50,
-          "cage": 25,
-          "object": 10,
-          "brawl": 50,
-          "ladder": 0,
-          "table": 0,
-          "tag": 50
-        }
+    {
+      "name": "Ultimate Warrior",
+      "persona": "Face",
+      "finisher": "Ultimate Press Slam",
+      "overall": 2450,
+      "attributes": {
+        "size": 25,
+        "speed": 0,
+        "strength": 50,
+        "savvy": 0,
+        "cheating": -50,
+        "tech": -50,
+        "cage": 25,
+        "object": 10,
+        "brawl": 50,
+        "ladder": 0,
+        "table": 0,
+        "tag": 50
+      },
+      "image": null,
+      "heat": 0,
+      "record": {
+        "wins": 1,
+        "losses": 0,
+        "draws": 0
+      },
+      "injured": false,
+      "injury_duration": 0
     }
   ]
 }
