@@ -42,8 +42,11 @@ class Match:
         persona = self.data_manager.get_pre_match_persona(pre_match_roll)
         self.pre_match_event = self.data_manager.get_pre_match_event(persona)
         self.log.append(f"Pre-Match Event Roll: {pre_match_roll} ({persona})")
-        self.log.append(f"Pre-Match Event: {self.pre_match_event['event']}")
-        self.apply_event_effect(self.pre_match_event['effect'])
+        if self.pre_match_event:
+            self.log.append(f"Pre-Match Event: {self.pre_match_event['event']}")
+            self.apply_event_effect(self.pre_match_event.get('effect'))
+        else:
+            self.log.append("No pre-match event occurred.")
 
     def determine_winner(self):
         w1_score = self.wrestler1.get_adjusted_overall()
@@ -70,22 +73,6 @@ class Match:
 
         self.log.append(f"Winner: {self.winner.name}")
 
-    def apply_win_result(self):
-        roll = random.randint(1, 100)
-        result = self.data_manager.get_win_result(self.match_type, self.winner.persona, roll)
-        
-        self.log.append(f"Win Result Roll: {roll}")
-        
-        if result == "Go To Unusual Results":
-            self.apply_unusual_result()
-        else:
-            self.log.append(f"Match Result: {result}")
-
-    def apply_unusual_result(self):
-        self.unusual_result = self.data_manager.get_unusual_result()
-        self.log.append(f"Unusual Result: {self.unusual_result['event']}")
-        self.apply_event_effect(self.unusual_result['effect'])
-
     def apply_event_effect(self, effect):
         if effect is None:
             return
@@ -103,6 +90,25 @@ class Match:
                 else:
                     self.log.append(f"{target.name} {effect['attribute']} permanently adjusted by {effect['change']}")
 
+    def apply_unusual_result(self):
+        self.unusual_result = self.data_manager.get_unusual_result()
+        if self.unusual_result:
+            self.log.append(f"Unusual Result: {self.unusual_result.get('event', 'No event description')}")
+            self.apply_event_effect(self.unusual_result.get('effect'))
+        else:
+            self.log.append("No unusual result occurred.")
+
+    def apply_win_result(self):
+        roll = random.randint(1, 100)
+        result = self.data_manager.get_win_result(self.match_type, self.winner.persona, roll)
+        
+        self.log.append(f"Win Result Roll: {roll}")
+        
+        if result == "Go To Unusual Results":
+            self.apply_unusual_result()
+        else:
+            self.log.append(f"Match Result: {result}")
+
     def get_match_summary(self):
         return "\n".join(self.log)
 
@@ -116,6 +122,12 @@ class Wrestler:
         self.heat = data.get('heat', 0)
         self.temporary_adjustments = {}
 
+    def adjust_overall(self, change):
+        self.overall += change
+
+    def adjust_heat(self, change):
+        self.heat += change
+
     def apply_modifier(self, modifier):
         modifier_value = self.attributes.get(modifier.lower(), 0)
         self.temporary_adjustments['modifier'] = modifier_value
@@ -124,14 +136,8 @@ class Wrestler:
     def get_adjusted_overall(self):
         return self.overall + sum(self.temporary_adjustments.values())
 
-    def adjust_overall(self, change):
-        self.overall += change
-
-    def adjust_heat(self, change):
-        self.heat += change
+    def get_attribute(self, attr):
+        return self.attributes.get(attr.lower(), 0)
 
     def reset_temporary_adjustments(self):
         self.temporary_adjustments = {}
-
-    def get_attribute(self, attr):
-        return self.attributes.get(attr.lower(), 0)

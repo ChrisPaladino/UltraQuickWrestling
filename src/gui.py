@@ -70,7 +70,9 @@ class WrestlingGUI:
         except Exception as e:
             self.output_box.delete(1.0, tk.END)
             self.output_box.insert(tk.END, f"An error occurred: {str(e)}\n")
-            print(f"Error details: {e}")  # For debugging
+            import traceback
+            traceback.print_exc()  # This will print the full traceback to the console
+            self.output_box.insert(tk.END, f"Check the console for more details.\n")
 
 if __name__ == "__main__":
     root = tk.Tk()
