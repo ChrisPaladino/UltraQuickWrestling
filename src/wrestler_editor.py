@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 import os
 from data_manager import DataManager
 from wrestler import Wrestler
+import shutil
 
 class WrestlerEditor:
     def __init__(self, master):
@@ -13,7 +14,9 @@ class WrestlerEditor:
         self.master.title("Ultra Quick Wrestling - Wrestler Editor")
         self.data_manager = DataManager()
         self.current_image = None
+        self.stats = {}
         self.create_widgets()
+        self.update_stats()
 
     def clear_fields(self):
         for attr in ['finisher', 'size', 'speed', 'strength', 'savvy', 'cheating', 'tech',
@@ -39,7 +42,8 @@ class WrestlerEditor:
         ttk.Label(main_frame, text="Name:").grid(row=0, column=0, sticky=tk.W)
         self.name_var = tk.StringVar()
         self.name_combo = ttk.Combobox(main_frame, textvariable=self.name_var, width=30)
-        self.name_combo['values'] = ['NEW'] + self.data_manager.get_wrestler_names()
+        wrestler_names = sorted(self.data_manager.get_wrestler_names())
+        self.name_combo['values'] = ['NEW'] + wrestler_names
         self.name_combo.grid(row=0, column=1, sticky=tk.W)
         self.name_combo.bind("<<ComboboxSelected>>", self.load_wrestler_data)
 
@@ -101,6 +105,13 @@ class WrestlerEditor:
         self.ties_entry = ttk.Entry(main_frame, width=10)
         self.ties_entry.grid(row=11, column=1, sticky=tk.W)
 
+        # Stats display
+        self.stats_frame = ttk.LabelFrame(main_frame, text="Wrestler Statistics", padding="10")
+        self.stats_frame.grid(row=0, column=5, rowspan=12, padx=(20, 0), sticky=(tk.N, tk.W, tk.E, tk.S))
+        
+        self.stats_text = tk.Text(self.stats_frame, width=30, height=20, wrap=tk.WORD, state=tk.DISABLED)
+        self.stats_text.pack(fill=tk.BOTH, expand=True)
+
         # Save Button
         self.save_button = ttk.Button(main_frame, text="Save Wrestler", command=self.save_wrestler)
         self.save_button.grid(row=12, column=0, columnspan=4, pady=(10, 0))
@@ -110,10 +121,37 @@ class WrestlerEditor:
         if name == 'NEW':
             return
         if messagebox.askyesno("Confirm Deletion", f"Are you sure you want to delete {name}?"):
+            # Get the wrestler data before deletion
+            wrestler = self.data_manager.get_wrestler(name)
+            
+            # Delete the wrestler from the data manager
             self.data_manager.delete_wrestler(name)
+            
+            # Delete the associated image if it exists
+            if wrestler and 'image' in wrestler:
+                image_path = os.path.join(self.data_manager.base_path, 'data', 'images', wrestler['image'])
+                if os.path.exists(image_path):
+                    try:
+                        os.remove(image_path)
+                    except Exception as e:
+                        print(f"Failed to delete image: {str(e)}")
+            
             messagebox.showinfo("Success", f"Wrestler {name} deleted successfully!")
             self.update_wrestler_list()
             self.clear_fields()
+            self.update_stats()
+
+    def display_stats(self):
+        self.stats_text.config(state=tk.NORMAL)
+        self.stats_text.delete('1.0', tk.END)
+        
+        for attr, values in self.stats.items():
+            self.stats_text.insert(tk.END, f"{attr.capitalize()}:\n")
+            self.stats_text.insert(tk.END, f"  Min: {values['min']}\n")
+            self.stats_text.insert(tk.END, f"  Max: {values['max']}\n")
+            self.stats_text.insert(tk.END, f"  Avg: {values['avg']:.2f}\n\n")
+        
+        self.stats_text.config(state=tk.DISABLED)
 
     def load_image(self, event):
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg *.bmp *.webp")])
@@ -121,12 +159,12 @@ class WrestlerEditor:
             self.load_image_file(file_path)
 
     def load_image_file(self, file_path):
+        if hasattr(self, 'image_display'):
+            self.image_display.destroy()
+
         image = Image.open(file_path)
         image.thumbnail((300, 300))
         photo = ImageTk.PhotoImage(image)
-        
-        if hasattr(self, 'image_display'):
-            self.image_display.destroy()
         
         self.image_display = ttk.Label(self.image_frame, image=photo)
         self.image_display.image = photo
@@ -178,21 +216,23 @@ class WrestlerEditor:
         images_dir = os.path.join(self.data_manager.base_path, 'data', 'images')
         os.makedirs(images_dir, exist_ok=True)
 
-        # Create a filename based on the wrestler's name
         safe_name = "".join([c for c in wrestler_name if c.isalpha() or c.isdigit()]).rstrip()
         filename = f"{safe_name}.webp"
         dest_path = os.path.join(images_dir, filename)
 
-        # If a file with this name already exists, add a number to make it unique
         counter = 1
         while os.path.exists(dest_path):
             filename = f"{safe_name}_{counter}.webp"
             dest_path = os.path.join(images_dir, filename)
             counter += 1
 
-        with Image.open(self.current_image) as img:
-            img.thumbnail((600, 600))
-            img.save(dest_path, 'WEBP')
+        try:
+            with Image.open(self.current_image) as img:
+                img.thumbnail((600, 600))
+                img.save(dest_path, 'WEBP')
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save image: {str(e)}")
+            return None
 
         return filename
 
@@ -207,17 +247,17 @@ class WrestlerEditor:
             'name': name,
             'persona': self.persona_entry.get(),
             'finisher': self.finisher_entry.get(),
-            'overall': int(self.overall_entry.get()),
+            'overall': self.safe_int(self.overall_entry.get()),
             'attributes': {
-                attr: int(getattr(self, f"{attr}_entry").get())
+                attr: self.safe_int(getattr(self, f"{attr}_entry").get())
                 for attr in ['size', 'speed', 'strength', 'savvy', 'cheating', 'tech',
-                             'cage', 'object', 'brawl', 'ladder', 'table', 'tag']
+                            'cage', 'object', 'brawl', 'ladder', 'table', 'tag']
             },
-            'heat': int(self.heat_entry.get()),
+            'heat': self.safe_int(self.heat_entry.get()),
             'record': {
-                'wins': int(self.wins_entry.get()),
-                'losses': int(self.losses_entry.get()),
-                'draws': int(self.ties_entry.get())
+                'wins': self.safe_int(self.wins_entry.get()),
+                'losses': self.safe_int(self.losses_entry.get()),
+                'draws': self.safe_int(self.ties_entry.get())
             }
         }
 
@@ -228,9 +268,40 @@ class WrestlerEditor:
         self.data_manager.update_wrestler(wrestler)
         messagebox.showinfo("Success", f"Wrestler {name} saved successfully!")
         self.update_wrestler_list()
+        self.update_stats()
+
+    def safe_int(self, value):
+        try:
+            return int(value)
+        except ValueError:
+            return 0
+
+    def update_stats(self):
+        wrestlers = self.data_manager.wrestlers
+        attributes = ['size', 'speed', 'strength', 'savvy', 'cheating', 'tech',
+                    'cage', 'object', 'brawl', 'ladder', 'table', 'tag', 'overall']
+
+        self.stats = {attr: {'min': float('inf'), 'max': float('-inf'), 'sum': 0} for attr in attributes}
+
+        for wrestler in wrestlers:
+            for attr in attributes:
+                if attr == 'overall':
+                    value = wrestler.get('overall', 0)
+                else:
+                    value = wrestler.get('attributes', {}).get(attr, 0)
+                value = int(value)  # Ensure the value is an integer
+                self.stats[attr]['min'] = min(self.stats[attr]['min'], value)
+                self.stats[attr]['max'] = max(self.stats[attr]['max'], value)
+                self.stats[attr]['sum'] += value
+
+        for attr in attributes:
+            self.stats[attr]['avg'] = self.stats[attr]['sum'] / len(wrestlers) if wrestlers else 0
+
+        self.display_stats()
 
     def update_wrestler_list(self):
-        self.name_combo['values'] = ['NEW'] + self.data_manager.get_wrestler_names()
+        wrestler_names = sorted(self.data_manager.get_wrestler_names())
+        self.name_combo['values'] = ['NEW'] + wrestler_names
 
 if __name__ == "__main__":
     root = tk.Tk()

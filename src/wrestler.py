@@ -3,8 +3,8 @@ class Wrestler:
         self.name = data['name']
         self.persona = data['persona']
         self.finisher = data['finisher']
-        self.attributes = data['attributes']
-        self.overall = data['overall']
+        self.attributes = data.get('attributes', {})
+        self.overall = data.get('overall', 0)
         self.heat = data.get('heat', 0)
         self.temporary_adjustments = {}
         self.record = data.get('record', {'wins': 0, 'losses': 0, 'draws': 0})

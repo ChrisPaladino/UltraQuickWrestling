@@ -92,10 +92,15 @@ class DataManager:
         self.save_json('wrestlers.json', wrestlers_data)
 
     def update_wrestler(self, updated_wrestler):
+        wrestler_dict = updated_wrestler.to_dict()
+        wrestler_exists = False
         for i, wrestler in enumerate(self.wrestlers):
-            if wrestler['name'] == updated_wrestler.name:
-                self.wrestlers[i] = updated_wrestler.to_dict()
+            if wrestler['name'] == wrestler_dict['name']:
+                self.wrestlers[i] = wrestler_dict
+                wrestler_exists = True
                 break
+        if not wrestler_exists:
+            self.wrestlers.append(wrestler_dict)
         self.save_wrestlers()
 
     @staticmethod
