@@ -1,3 +1,6 @@
+#### Google Sheets Formula
+=if(H4 <> "", (I$2 - (H4 - 1) * ((I$2 - I$1) / (counta(H$4:H$76)- 1))), "")
+
 #### Wrestler attributes
 1. Name
 2. Personna (Heel or Face)
