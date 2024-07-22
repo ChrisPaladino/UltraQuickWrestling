@@ -204,35 +204,6 @@
       "injury_duration": 0
     },
     {
-      "name": "Harlequin Havoc",
-      "persona": "Heel",
-      "finisher": "",
-      "overall": 0,
-      "attributes": {
-        "size": 0,
-        "speed": 0,
-        "strength": 0,
-        "savvy": 0,
-        "cheating": 0,
-        "tech": 0,
-        "cage": 0,
-        "object": 0,
-        "brawl": 0,
-        "ladder": 0,
-        "table": 0,
-        "tag": 0
-      },
-      "image": "HarlequinHavoc.webp",
-      "heat": 0,
-      "record": {
-        "wins": 0,
-        "losses": 0,
-        "draws": 0
-      },
-      "injured": false,
-      "injury_duration": 0
-    },
-    {
       "name": "Zuva",
       "persona": "Heel",
       "finisher": "",
@@ -283,7 +254,7 @@
       "image": "ViperRose.webp",
       "heat": 0,
       "record": {
-        "wins": 0,
+        "wins": 1,
         "losses": 0,
         "draws": 0
       },
