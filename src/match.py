@@ -82,7 +82,7 @@ class Match:
                     target.adjust_overall(effect['change'])
                 elif effect['attribute'] == 'Heat':
                     target.adjust_heat(effect['change'])
-                
+
                 if 'duration' in effect and effect['duration'] == 'This match only':
                     self.log.append(f"{target.name} {effect['attribute']} adjusted by {effect['change']} for this match")
                 else:
