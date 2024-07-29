@@ -590,7 +590,7 @@
         {
             "roll": "01",
             "event": "Immediately Following Match Heel Leaves Fed. May Not Return for 1 Year",
-            "effect": {"type": "wrestler_leaves", "target": "HEEL", "duration": 19}
+            "effect": {"type": "wrestler_leaves", "target": "HEEL", "duration": 96}
         },
         {
             "roll": "02",
