@@ -1,3 +1,10 @@
+#### Bugs
+1. Wrestler 1 should be "Face" and Wrestler 2 should be "Heel" - for purposes of this match, regardless of their persona. Suggestion to have FACE and HEEL instead of Wrestler 1 and 2.
+2. Face and Heel comparisons (match.py line 79) seem to be case-sensitive. Overall - we should convert things to lowercase to compare them.
+
+#### Google Sheets Formula
+=if(H4 <> "", (I$2 - (H4 - 1) * ((I$2 - I$1) / (counta(H$4:H$76)- 1))), "")
+
 #### Wrestler attributes
 1. Name
 2. Personna (Heel or Face)

@@ -590,7 +590,7 @@
         {
             "roll": "01",
             "event": "Immediately Following Match Heel Leaves Fed. May Not Return for 1 Year",
-            "effect": {"type": "wrestler_leaves", "target": "HEEL", "duration": 12}
+            "effect": {"type": "wrestler_leaves", "target": "HEEL", "duration": 96}
         },
         {
             "roll": "02",
@@ -600,7 +600,7 @@
         {
             "roll": "03",
             "event": "Entrance Pyro Malfunctions. Heel Injured for 3 Months",
-            "effect": {"type": "injury", "target": "HEEL", "duration": 3}
+            "effect": {"type": "injury", "target": "HEEL", "duration": 24}
         },
         {
             "roll": "04",
@@ -635,7 +635,7 @@
         {
             "roll": "10",
             "event": "Ring Collapses. Both Wrestlers Injured for 2 Months",
-            "effect": {"type": "injury", "target": "BOTH", "duration": 2}
+            "effect": {"type": "injury", "target": "BOTH", "duration": 16}
         },
         {
             "roll": "11",
@@ -670,12 +670,12 @@
         {
             "roll": "17",
             "event": "Face Slams Heel Through Announce Table for Win. Heel Injured 3 Weeks",
-            "effect": {"type": "injury_win", "winner": "FACE", "target": "HEEL", "duration": 0.75}
+            "effect": {"type": "injury_win", "winner": "FACE", "target": "HEEL", "duration": 6}
         },
         {
             "roll": "18",
             "event": "Heel Throws Fireball at Face. Face Injured 1 month",
-            "effect": {"type": "injury", "target": "FACE", "duration": 1}
+            "effect": {"type": "injury", "target": "FACE", "duration": 8}
         },
         {
             "roll": "19",
@@ -685,7 +685,7 @@
         {
             "roll": "20",
             "event": "Face #4 Comes to Aid of Face. DQ. Heel Injured 2 weeks from Attack",
-            "effect": {"type": "dq_injury", "winner": "HEEL", "target": "HEEL", "duration": 0.5}
+            "effect": {"type": "dq_injury", "winner": "HEEL", "target": "HEEL", "duration": 4}
         },
         {
             "roll": "21",
@@ -700,7 +700,7 @@
         {
             "roll": "23",
             "event": "Wrestlers Fight to Outside Arena. Oncoming Car Hits Heel. Heel injured 2 months",
-            "effect": {"type": "injury", "target": "HEEL", "duration": 2}
+            "effect": {"type": "injury", "target": "HEEL", "duration": 16}
         },
         {
             "roll": "24",
@@ -710,12 +710,12 @@
         {
             "roll": "25",
             "event": "Heel Misses Flying Head butt. Injured 3 weeks.",
-            "effect": {"type": "self_injury", "target": "HEEL", "duration": 0.75}
+            "effect": {"type": "self_injury", "target": "HEEL", "duration": 6}
         },
         {
             "roll": "26",
             "event": "Heel Misses Suicide Dive. Injured for 1 Year.",
-            "effect": {"type": "self_injury", "target": "HEEL", "duration": 12}
+            "effect": {"type": "self_injury", "target": "HEEL", "duration": 96}
         },
         {
             "roll": "27",
@@ -725,7 +725,7 @@
         {
             "roll": "28",
             "event": "Heel #6 knocks Face in Knee with Tire Iron. Heel Makes Pin. Face Injured 1 month",
-            "effect": {"type": "interference_injury", "winner": "HEEL", "target": "FACE", "duration": 1}
+            "effect": {"type": "interference_injury", "winner": "HEEL", "target": "FACE", "duration": 8}
         },
         {
             "roll": "29",
@@ -745,7 +745,7 @@
         {
             "roll": "32",
             "event": "Heel Ko's Ref. Brutally Beats Face. DQ. Face Injured 2 weeks",
-            "effect": {"type": "dq_injury", "winner": "FACE", "target": "FACE", "duration": 0.5}
+            "effect": {"type": "dq_injury", "winner": "FACE", "target": "FACE", "duration": 4}
         },
         {
             "roll": "33",
@@ -785,7 +785,7 @@
         {
             "roll": "40",
             "event": "Face Offered Movie Deal. Leaves Wrestling for 6 Months after Match",
-            "effect": {"type": "wrestler_leaves", "target": "FACE", "duration": 6}
+            "effect": {"type": "wrestler_leaves", "target": "FACE", "duration": 48}
         },
         {
             "roll": "41",
@@ -805,7 +805,7 @@
         {
             "roll": "44",
             "event": "Ringside Lighting Falls on Face. Face Injured for 1 Month",
-            "effect": {"type": "injury", "target": "FACE", "duration": 1}
+            "effect": {"type": "injury", "target": "FACE", "duration": 8}
         },
         {
             "roll": "45",
@@ -815,7 +815,7 @@
         {
             "roll": "46",
             "event": "Heel Mis-Executes Piledriver. Face Injured for 1 year",
-            "effect": {"type": "injury", "target": "FACE", "duration": 12}
+            "effect": {"type": "injury", "target": "FACE", "duration": 96}
         },
         {
             "roll": "47",
@@ -845,7 +845,7 @@
         {
             "roll": "52",
             "event": "Heel Suspended by Commish for 6 Months for Using Outlawed Move",
-            "effect": {"type": "suspension", "target": "HEEL", "duration": 6}
+            "effect": {"type": "suspension", "target": "HEEL", "duration": 48}
         },
         {
             "roll": "53",
@@ -855,7 +855,7 @@
         {
             "roll": "54",
             "event": "Heel Wins with Vicious DDT onto Chair. Face Injured 3 weeks",
-            "effect": {"type": "injury_win", "winner": "HEEL", "target": "FACE", "duration": 0.75}
+            "effect": {"type": "injury_win", "winner": "HEEL", "target": "FACE", "duration": 6}
         },
         {
             "roll": "55",
@@ -885,7 +885,7 @@
         {
             "roll": "60",
             "event": "Promotion With Dog Goes bad. Dog Bites Both Wrestlers Injured 2 weeks.",
-            "effect": {"type": "injury", "target": "BOTH", "duration": 0.5}
+            "effect": {"type": "injury", "target": "BOTH", "duration": 4}
         },
         {
             "roll": "61",
@@ -895,7 +895,7 @@
         {
             "roll": "62",
             "event": "Face #5 takes Briefcase from Heel. Uses it. DQ. Heel injured 2 weeks",
-            "effect": {"type": "dq_injury", "winner": "HEEL", "target": "HEEL", "duration": 0.5}
+            "effect": {"type": "dq_injury", "winner": "HEEL", "target": "HEEL", "duration": 4}
         },
         {
             "roll": "63",
@@ -965,7 +965,7 @@
         {
             "roll": "76",
             "event": "Heel Injures Knee from Chair Shot. Injured for 6 weeks.",
-            "effect": {"type": "self_injury", "target": "HEEL", "duration": 1.5}
+            "effect": {"type": "self_injury", "target": "HEEL", "duration": 12}
         },
         {
             "roll": "77",
@@ -990,7 +990,7 @@
         {
             "roll": "81",
             "event": "Face Lands awkward after Flying Elbow. Injured for 6 weeks",
-            "effect": {"type": "self_injury", "target": "FACE", "duration": 1.5}
+            "effect": {"type": "self_injury", "target": "FACE", "duration": 12}
         },
         {
             "roll": "82",
@@ -1070,22 +1070,22 @@
         {
             "roll": "97",
             "event": "Barbed Wire Bat Found Under Ring. Heel Uses. DQ. Face Injured 2 weeks",
-            "effect": {"type": "dq_injury", "winner": "FACE", "target": "FACE", "duration": 0.5}
+            "effect": {"type": "dq_injury", "winner": "FACE", "target": "FACE", "duration": 4}
         },
         {
             "roll": "98",
             "event": "Entrance Ramp Collapses. Face Injured for 3 Months",
-            "effect": {"type": "injury", "target": "FACE", "duration": 3}
+            "effect": {"type": "injury", "target": "FACE", "duration": 24}
         },
         {
             "roll": "99",
             "event": "Face Mis-TimesPowerbomb. Heel Injured for 4 months",
-            "effect": {"type": "injury", "target": "HEEL", "duration": 4}
+            "effect": {"type": "injury", "target": "HEEL", "duration": 32}
         },
         {
             "roll": "100",
             "event": "Immediately Following Match Face Leaves Fed. May not Return for 1 year",
-            "effect": {"type": "wrestler_leaves", "target": "FACE", "duration": 12}
+            "effect": {"type": "wrestler_leaves", "target": "FACE", "duration": 96}
         }
     ],
     "post_match_events": {
