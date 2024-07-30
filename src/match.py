@@ -86,6 +86,7 @@ class Match:
                 if 'duration' in effect and effect['duration'] == 'This match only':
                     self.log.append(f"{target.name} {effect['attribute']} adjusted by {effect['change']} for this match")
                 else:
+                    # Does this then change the attribute permanently?
                     self.log.append(f"{target.name} {effect['attribute']} permanently adjusted by {effect['change']}")
 
     def apply_unusual_result(self):
