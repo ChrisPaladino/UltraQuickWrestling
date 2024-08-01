@@ -1,3 +1,7 @@
+#### Bugs
+1. Wrestler 1 should be "Face" and Wrestler 2 should be "Heel" - for purposes of this match, regardless of their persona. Suggestion to have FACE and HEEL instead of Wrestler 1 and 2.
+2. Face and Heel comparisons (match.py line 79) seem to be case-sensitive. Overall - we should convert things to lowercase to compare them.
+
 #### To Implement
 - Need a way to track the source/original vs. the changed stats (overalls, heat, records) so that we can reset things back to default
 - Need to know rankings (heel #7, face #1, 1-10 of each)

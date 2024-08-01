@@ -77,10 +77,10 @@
         "table": 0,
         "tag": 0
       },
-      "image": "BrookBuchanan.webp",
+      "image": "BrookBuchanan_1.webp",
       "heat": 0,
       "record": {
-        "wins": 1,
+        "wins": 0,
         "losses": 0,
         "draws": 0
       },
@@ -236,7 +236,7 @@
       "name": "Viper Rose",
       "persona": "Heel",
       "finisher": "",
-      "overall": -50,
+      "overall": 0,
       "attributes": {
         "size": 0,
         "speed": 0,
@@ -255,7 +255,7 @@
       "heat": 0,
       "record": {
         "wins": 1,
-        "losses": 1,
+        "losses": 0,
         "draws": 0
       },
       "injured": false,
