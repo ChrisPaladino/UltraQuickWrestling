@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext
 from data_manager import DataManager
 from match import Match
-from wrestler import Wrestler
+from match import Wrestler
 
 class MatchSimulator:
     def __init__(self, master):

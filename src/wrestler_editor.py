@@ -5,7 +5,7 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 import os
 from data_manager import DataManager
-from wrestler import Wrestler
+from match import Wrestler
 import shutil
 
 class WrestlerEditor:
