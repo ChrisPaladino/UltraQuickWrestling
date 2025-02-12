@@ -80,7 +80,7 @@
       "image": "BrookBuchanan.webp",
       "heat": 0,
       "record": {
-        "wins": 0,
+        "wins": 1,
         "losses": 0,
         "draws": 0
       },
@@ -168,7 +168,7 @@
       "heat": 0,
       "record": {
         "wins": 0,
-        "losses": 0,
+        "losses": 1,
         "draws": 0
       },
       "injured": false,
