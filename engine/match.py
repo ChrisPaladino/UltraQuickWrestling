@@ -1,13 +1,15 @@
 import random
+import json
 from engine.wrestler import Wrestler
 
 class Match:
-    def __init__(self, wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles):
+    def __init__(self, wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles, wrestlers_file="data/wrestlers.json"):
         self.face = Wrestler(wrestler_a_data if assigned_roles['Face'] == wrestler_a_data['name'] else wrestler_b_data)
         self.heel = Wrestler(wrestler_b_data if self.face.name == wrestler_a_data['name'] else wrestler_a_data)
         self.match_type = match_type
         self.game_data = game_data
         self.result_log = []
+        self.wrestlers_file = wrestlers_file
 
     def simulate(self):
         self.result_log.clear()
@@ -20,16 +22,13 @@ class Match:
         modifier = modifier_entry["modifier"].lower() if modifier_entry else "normal"
         self.result_log.append(f"Match Modifier Rolled: {modifier.title()}")
 
-        rating_face = self.face.get_match_rating(modifier)
-        rating_heel = self.heel.get_match_rating(modifier)
-        self.result_log.append(f"[DEBUG] Match ratings: {self.face.name}={rating_face}, {self.heel.name}={rating_heel}")
-
         # Step 2: Pre-Match Chart
         pre_chart_roll = random.randint(0, 9)
         self.result_log.append(f"[DEBUG] Rolled d10 for pre-match chart: {pre_chart_roll}")
         chart_entry = next((c for c in self.game_data["pre_match_chart"] if c["roll"] == pre_chart_roll), None)
         target_side = chart_entry["result"] if chart_entry else "Face"
         target = self.face if target_side == "Face" else self.heel
+        self.result_log.append(f"[DEBUG] Pre-match target side: {target_side}, Target Wrestler: {target.name}")
 
         pre_event_roll = random.randint(1, 100)
         self.result_log.append(f"[DEBUG] Rolled d100 for pre-match event: {pre_event_roll}")
@@ -55,15 +54,41 @@ class Match:
         self.result_log.append(f"Pre-Match Event ({target_side}): {desc}")
 
         effect = pre_event.get("effect")
-        if effect and effect["attribute"].lower() == "overall" and effect["duration"] == "This match only":
-            if target == self.face:
-                rating_face += effect["change"]
-            else:
-                rating_heel += effect["change"]
+        match_adjustment = {"Face": 0, "Heel": 0}
+        if effect:
+            attr = effect.get("attribute", "").lower()
+            change = effect.get("change")
+            duration = effect.get("duration", "")
+            apply_to = effect.get("target")
 
+            # Temporary effects for this match
+            if duration == "This match only" and isinstance(change, int):
+                if attr == "overall":
+                    if apply_to == "FACE":
+                        match_adjustment["Face"] += change
+                    elif apply_to == "HEEL":
+                        match_adjustment["Heel"] += change
+
+            # Permanent changes
+            elif duration == "Permanently" and isinstance(change, int):
+                self.result_log.append(f"[DEBUG] Applying permanent change: {apply_to} {attr.title()} {change:+}")
+                self.apply_permanent_change(apply_to, attr.title(), change)
+
+        # Step 3: Calculate match ratings (AFTER applying pre-match modifiers)
+        base_face = getattr(self.face, 'overall', 0)
+        base_heel = getattr(self.heel, 'overall', 0)
+        mod_face = getattr(self.face, modifier, 0)
+        mod_heel = getattr(self.heel, modifier, 0)
+        adj_face = match_adjustment["Face"]
+        adj_heel = match_adjustment["Heel"]
+        rating_face = base_face + mod_face + adj_face
+        rating_heel = base_heel + mod_heel + adj_heel
+
+        self.result_log.append(f"[DEBUG] Match rating formula: {self.face.name} = Overall + {modifier.title()} + Adjustment = {base_face} + {mod_face} + {adj_face} = {rating_face}")
+        self.result_log.append(f"[DEBUG] Match rating formula: {self.heel.name} = Overall + {modifier.title()} + Adjustment = {base_heel} + {mod_heel} + {adj_heel} = {rating_heel}")
         self.result_log.append(f"[DEBUG] Adjusted match ratings: {self.face.name}={rating_face}, {self.heel.name}={rating_heel}")
 
-        # Step 3: Determine Winner
+        # Step 4: Determine Winner
         diff = abs(rating_face - rating_heel)
         self.result_log.append(f"[DEBUG] Point difference: {diff}")
 
@@ -92,7 +117,7 @@ class Match:
 
         self.result_log.append(f"Roll: {roll} → Winner: {winner.name} ({winner_type})")
 
-        # Step 4: Post-Match Result
+        # Step 5: Post-Match Result
         post_chart = self.game_data["win_charts"].get(self.match_type, {})
         post_results = post_chart.get(winner_type, [])
         post_roll = random.randint(1, 100)
@@ -109,13 +134,34 @@ class Match:
         post_result = post_result_entry["result"]
         self.result_log.append(f"Post-Match Result: {post_result}")
 
-        # Step 5: Unusual Results
+        # Step 6: Unusual Results
         if "Unusual" in post_result:
-            unusual_data = self.game_data.get("unusual_results", {})
-            unusual_pool = unusual_data.get(self.match_type, []) if isinstance(unusual_data, dict) else []
+            unusual_pool = self.game_data.get("unusual_results", [])
             if unusual_pool:
-                unusual = random.choice(unusual_pool)
-                self.result_log.append(f"Unusual Event: {unusual['description'].format(wrestler=winner.name)}")
+                selected = random.choice(unusual_pool)
+                desc = selected.get("event", "An unusual event occurs.")
+                self.result_log.append(f"[DEBUG] Rolled on unusual_results")
+                self.result_log.append(f"Unusual Event: {desc.format(wrestler=winner.name)}")
+            else:
+                self.result_log.append("[DEBUG] No unusual results available.")
 
         return "\n".join(self.result_log)
+
+    def apply_permanent_change(self, target_side, attribute, change):
+        try:
+            with open(self.wrestlers_file, "r") as f:
+                data = json.load(f)
+
+            target_name = self.face.name if target_side == "FACE" else self.heel.name
+            for w in data:
+                if w["name"] == target_name:
+                    old_val = w.get(attribute, 0)
+                    w[attribute] = old_val + change
+                    self.result_log.append(f"[DEBUG] {target_name}'s {attribute} permanently changed from {old_val} to {w[attribute]}")
+                    break
+
+            with open(self.wrestlers_file, "w") as f:
+                json.dump(data, f, indent=2)
+        except Exception as e:
+            self.result_log.append(f"[ERROR] Failed to update permanent change: {e}")
 

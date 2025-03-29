@@ -1,46 +1,55 @@
-import random
 from engine import data_loader
 from engine.match import Match
 
-def choose_wrestler(wrestlers, prompt):
-    print(f"\n{prompt}")
+def choose_wrestler(wrestlers, role):
+    print(f"\nSelect {role.upper()}:")
     for i, w in enumerate(wrestlers):
-        print(f"{i+1}. {w['name']} ({w['persona']})")
+        print(f"{i + 1}. {w['name']} ({w['persona']})")
     while True:
-        try:
-            choice = int(input("Enter number: "))
-            if 1 <= choice <= len(wrestlers):
-                return wrestlers[choice - 1]
-        except ValueError:
-            pass
-        print("Invalid choice. Try again.")
+        choice = input("Enter number: ")
+        if choice.isdigit() and 1 <= int(choice) <= len(wrestlers):
+            return wrestlers[int(choice) - 1]
+        print("Invalid selection. Try again.")
 
 def choose_match_type(game_data):
-    match_types = list(game_data["win_charts"].keys())
     print("\nChoose Match Type:")
-    for i, mt in enumerate(match_types):
-        print(f"{i+1}. {mt}")
+    types = list(game_data['win_charts'].keys())
+    for i, m in enumerate(types):
+        print(f"{i + 1}. {m}")
     while True:
-        try:
-            choice = int(input("Enter number: "))
-            if 1 <= choice <= len(match_types):
-                return match_types[choice - 1]
-        except ValueError:
-            pass
-        print("Invalid choice. Try again.")
+        choice = input("Enter number: ")
+        if choice.isdigit() and 1 <= int(choice) <= len(types):
+            return types[int(choice) - 1]
+        print("Invalid selection. Try again.")
 
 def main():
     wrestlers = data_loader.load_wrestlers()
     game_data = data_loader.load_game_data()
 
-    print("Welcome to Ultra Quick Wrestling!")
+    wrestler1 = choose_wrestler(wrestlers, "Wrestler 1")
+    wrestler2 = choose_wrestler(wrestlers, "Wrestler 2")
 
-    wrestler_a = choose_wrestler(wrestlers, "Select Wrestler A")
-    wrestler_b = choose_wrestler(wrestlers, "Select Wrestler B")
+    if wrestler1['persona'] == wrestler2['persona']:
+        print("\nBoth wrestlers have the same persona.")
+        print("Please assign one as the FACE:")
+        print(f"1. {wrestler1['name']}\n2. {wrestler2['name']}")
+        while True:
+            choice = input("Enter number for who should be FACE: ")
+            if choice == '1':
+                assigned_roles = {"Face": wrestler1['name'], "Heel": wrestler2['name']}
+                break
+            elif choice == '2':
+                assigned_roles = {"Face": wrestler2['name'], "Heel": wrestler1['name']}
+                break
+            print("Invalid input. Please enter 1 or 2.")
+    else:
+        face = wrestler1 if wrestler1['persona'] == "Face" else wrestler2
+        heel = wrestler2 if face == wrestler1 else wrestler1
+        assigned_roles = {"Face": face['name'], "Heel": heel['name']}
 
     match_type = choose_match_type(game_data)
 
-    match = Match(wrestler_a, wrestler_b, match_type, game_data)
+    match = Match(wrestler1, wrestler2, match_type, game_data, assigned_roles)
     print("\n--- MATCH RESULT ---")
     print(match.simulate())
 
