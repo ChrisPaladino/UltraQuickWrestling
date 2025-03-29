@@ -6,20 +6,18 @@ A Python GUI-based simulation of **Ultra Quick Wrestling**, the fast-paced 1991-
 
 ## 📦 Project Structure
 
-UltraQuickWrestling/
-│
+ultra_quick_wrestling/
+├── main.py              # Entry point for console app
+├── engine/
+│   ├── __init__.py
+│   ├── match.py         # Core match simulation
+│   ├── wrestler.py      # Wrestler model + rating logic
+│   └── data_loader.py   # Reads wrestlers.json and game_data.json
 ├── data/
-│   ├── images/                # Wrestler images
-│   ├── wrestlers.json         # Wrestler profiles and stats
-│   └── game_data.json         # Rules, charts, modifiers, and outcomes
-│
-├── match_simulator.py         # 🖥 Main TKinter GUI app
-├── match.py                   # 🤼‍♂️ Match resolution logic + Wrestler class
-├── data_manager.py            # 📊 Loads and saves wrestler/game data
-├── wrestler_editor.py         # ✏️ (Optional) Editor for creating/updating wrestlers
-│
-├── Ultra Quick Wrestling.pdf  # 🗂 Official rulebook (reference only)
-└── README.md                  # 📘 This file
+│   ├── wrestlers.json
+│   └── game_data.json
+├── rules/
+│   └── UltraQuickWrestling_Rules.md
 
 ---
 
@@ -75,58 +73,3 @@ Advanced and supplemental rules are partially implemented or planned.
 Describe the physical appearance of this pro wrestler such that I can feed a paragraph into an AI art generation program and get a portrait. Do not include mood, or feeling - only physical descriptions. Do so in a paragraph format, not a list, not a character sheet.
 
 This is a fictional pro wrestler named . They're a . I'd like you to estimate height (in inches) and weight (in lbs). I also need 2 suggestions they're finishing move.
-
-### Wrestler attributes
-
-1. Name
-2. Personna (Heel or Face)
-3. Finisher
-4. Attributes
-
-    - Size
-    - Speed
-    - Strength
-    - Savvy
-    - Cheating
-    - Tech
-    - Cage
-    - Object
-    - Brawl
-    - Ladder
-    - Table
-    - Tag
-
-5. Overall Rating
-6. Heat
-
-#### Match attributes
-
-1. Type
-
-    - TV Taping
-    - PPV Match
-    - No DQ Match
-    - Cage Match
-    - Specialty Match
-
-#### Fed
-
-- Start with 20-40 wrestlers
-- Take 10 HEELS and 10 FACES and assign them heat from 10 (highest overall) down to 1 (least overall of the 10 selected)
-
-#### Overall Adjustments
-
-- World title adds 100 to overall (lost when he loses the title)
-- Minor title adds 50 points (again, lost when we lose the title)
-- Wins on a Clean pin adds 20 to Overall
-- Loses on a Clean pin subtracts 25 from overall rating
-- Heat rating going up adds 20 to overall
-- Heat rating goes down subtract 20 from overall rating
-
-#### Tag Matches
-
-- Combine the overalls and add the TAG rating of each to get the initial overall
-
-#### Battle Royal
-
-- Pair folks into mini-battles, add BRAWL to each
