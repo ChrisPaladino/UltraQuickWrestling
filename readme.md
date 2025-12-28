@@ -61,6 +61,46 @@ Advanced and supplemental rules are partially implemented or planned.
 
 ---
 
+## 🏷️ Tag Matches
+
+Tag support treats each side as a team array and factors every member's **TAG** rating into the match formula.
+
+- **Inputs (CLI):** Use `--tag` to enable tag mode, and pass `--team-a` / `--team-b` as comma-separated lists or JSON arrays of wrestler names. Each wrestler can define a `tag` attribute (top-level or inside `attributes`); if absent it defaults to `0` so legacy rosters still work.
+- **Face/Heel assignment:** In tag mode the app will only auto-assign if every member of Team A is a Face and every member of Team B is a Heel (or vice versa). Mixed-persona teams must set `--face-team A` or `--face-team B` so the engine knows who works Face for this bout.
+- **Match type selection:** `--match-type` can point to either a singles or tag win chart. When omitted, the first available tag win chart is used; if no tag charts exist the engine falls back to singles charts.
+
+Example CLI calls:
+
+```bash
+# Two-on-two tag bout, explicit Face side
+python main.py --tag \
+  --team-a "Bret Hart, Jim Neidhart" \
+  --team-b "[\"Ted DiBiase\",\"IRS\"]" \
+  --face-team A \
+  --match-type "PPV"
+
+# Trios match using JSON arrays and a specialty chart
+python main.py --tag \
+  --team-a '["Road Warrior Hawk","Road Warrior Animal","Dusty Rhodes"]' \
+  --team-b '["Ric Flair","Arn Anderson","Tully Blanchard"]' \
+  --face-team B \
+  --match-type "Specialty"
+```
+
+Example programmatic/API payload (mirrors the CLI fields):
+
+```json
+{
+  "tag": true,
+  "team_a": ["Bret Hart", "Jim Neidhart"],
+  "team_b": ["Ted DiBiase", "IRS"],
+  "match_type": "PPV",
+  "face_team": "A"
+}
+```
+
+---
+
 ## 🔮 Future Roadmap
 
 - Match history log / federation tracker
@@ -123,6 +163,12 @@ Other tunables include `injury_penalty`, `injury_duration`, `rivalry_heat_bonus`
 - `rivalry_id`: identifier string shared by opponents in a feud
 - `heat_modifier`: persistent heat delta applied to match ratings
 - `injured` / `injury_duration`: injury tracking (backward compatible defaults provided)
+- `tag`: optional rating for tag matches; defaults to `0` when missing so existing rosters remain valid.
+
+Tag-specific charts live alongside the singles data in `data/game_data.json`:
+
+- `tag_result_chart`: Uses the same `difference` / `high_rated_wins` / `low_rated_wins` bands as singles, but tuned for team math. If omitted, it reuses the singles `result_chart` automatically.
+- `tag_win_charts`: Match-type outcome tables for Faces and Heels in tag bouts. If a tag chart is missing for a type, the engine defaults to the singles `win_charts`, keeping legacy data playable.
 
 A top-level `season` block (`length`, `current_week`) tracks booking seasons when enabled.
 
