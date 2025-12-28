@@ -100,6 +100,7 @@ class EventCard:
     name: str
     date: str
     venue: str
+    notes: str = ""
     matches: List[CardMatch] = field(default_factory=list)
     id: str = field(default_factory=lambda: _generate_id("event"))
 
@@ -109,6 +110,7 @@ class EventCard:
             "name": self.name,
             "date": self.date,
             "venue": self.venue,
+            "notes": self.notes,
             "matches": [m.to_dict() for m in self.matches],
         }
 
@@ -120,6 +122,7 @@ class EventCard:
             name=payload.get("name", "Event"),
             date=payload.get("date", _default_date()),
             venue=payload.get("venue", ""),
+            notes=payload.get("notes", ""),
             matches=matches,
         )
 
@@ -137,6 +140,7 @@ class TimelineEntry:
     belts: List[str]
     post_result: str
     log: str
+    notes: str = ""
     occurred_on: str = field(default_factory=_default_date)
 
     def to_dict(self) -> Dict[str, object]:
@@ -150,6 +154,7 @@ class TimelineEntry:
             "belts": self.belts,
             "post_result": self.post_result,
             "log": self.log,
+            "notes": self.notes,
             "occurred_on": self.occurred_on,
         }
 
@@ -202,10 +207,62 @@ def add_match_to_event(event_id: str, card_match: CardMatch) -> CardMatch:
     return card_match
 
 
+def remove_match_from_event(event_id: str, match_id: str) -> None:
+    state = load_state()
+    updated_events = []
+    found_event = False
+    for raw_event in state.get("events", []):
+        if raw_event.get("id") == event_id:
+            found_event = True
+            event = EventCard.from_dict(raw_event)
+            event.matches = [m for m in event.matches if m.id != match_id]
+            updated_events.append(event.to_dict())
+        else:
+            updated_events.append(raw_event)
+    if not found_event:
+        raise ValueError(f"Event with id '{event_id}' not found.")
+    state["events"] = updated_events
+    save_state(state)
+
+
+def update_event(event_id: str, *, name: str, date: str, venue: str, notes: str = "") -> EventCard:
+    state = load_state()
+    updated_events = []
+    updated_card: EventCard | None = None
+    for raw_event in state.get("events", []):
+        if raw_event.get("id") == event_id:
+            card = EventCard.from_dict(raw_event)
+            card.name = name
+            card.date = date
+            card.venue = venue
+            card.notes = notes
+            updated_card = card
+            updated_events.append(card.to_dict())
+        else:
+            updated_events.append(raw_event)
+    if updated_card is None:
+        raise ValueError(f"Event with id '{event_id}' not found.")
+    state["events"] = updated_events
+    save_state(state)
+    return updated_card
+
+
 def record_timeline_entry(entry: TimelineEntry) -> TimelineEntry:
     state = load_state()
     timeline = state.get("timeline", [])
     timeline.append(entry.to_dict())
+    state["timeline"] = timeline
+    save_state(state)
+    return entry
+
+
+def update_timeline_entry(index: int, updates: Dict[str, object]) -> Dict[str, object]:
+    state = load_state()
+    timeline = state.get("timeline", [])
+    if index < 0 or index >= len(timeline):
+        raise IndexError(f"Timeline entry index {index} is out of range.")
+    entry = {**timeline[index], **updates}
+    timeline[index] = entry
     state["timeline"] = timeline
     save_state(state)
     return entry
@@ -233,4 +290,3 @@ class MatchBookingContext:
             log=log,
         )
         record_timeline_entry(entry)
-
