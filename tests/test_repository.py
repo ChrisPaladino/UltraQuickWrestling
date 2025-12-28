@@ -44,6 +44,22 @@ def test_assign_belt_requires_holder_exists(temp_data_dir: Path):
     assert assigned["current_holder"] == "Champion"
 
 
+def test_delete_belt(temp_data_dir: Path):
+    repository.save_belts(
+        [
+            {"name": "World Title", "current_holder": "Champion", "prestige": 90},
+            {"name": "Tag Titles", "current_holder": "", "prestige": 80},
+        ]
+    )
+
+    repository.delete_belt("World Title")
+    saved = json.loads((temp_data_dir / "belts.json").read_text())
+    assert saved["belts"] == [{"name": "Tag Titles", "current_holder": "", "prestige": 80}]
+
+    with pytest.raises(ValueError):
+        repository.delete_belt("Missing Belt")
+
+
 def test_schedule_event_adds_entry(temp_data_dir: Path):
     event = {"name": "Monthly Mayhem", "date": "2024-10-01"}
     repository.schedule_event(event)

@@ -10,6 +10,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from engine import booking, repository
+from engine.advanced_rules import AdvancedRulesConfig
 from engine.match import create_match
 
 
@@ -65,50 +66,67 @@ class DataStore:
         self.reload()
         return card_match
 
-    def _baseline_wrestler(self, name, persona, finisher, overall):
+    def _baseline_wrestler(
+        self,
+        name,
+        persona,
+        finisher,
+        overall,
+        *,
+        attributes=None,
+        heat_modifier=0,
+        overall_modifier=0,
+        rivalry_id=None,
+        injured=False,
+        injury_duration=0,
+        titles=None,
+        record=None,
+        heat=0,
+        image="",
+    ):
+        base_attributes = {
+            "size": 0,
+            "speed": 0,
+            "strength": 0,
+            "savvy": 0,
+            "cheating": 0,
+            "cage": 0,
+            "object": 0,
+            "ladder": 0,
+            "table": 0,
+            "tag": 0,
+            "technical": 0,
+            "brawling": 0,
+            "heat": 0,
+        }
+        merged_attributes = {**base_attributes, **(attributes or {})}
         return {
             "name": name,
             "persona": persona or "Face",
             "finisher": finisher or "",
             "overall": int(overall),
-            "attributes": {
-                "size": 0,
-                "speed": 0,
-                "strength": 0,
-                "savvy": 0,
-                "cheating": 0,
-                "cage": 0,
-                "object": 0,
-                "ladder": 0,
-                "table": 0,
-                "tag": 0,
-                "technical": 0,
-                "brawling": 0,
-            },
-            "image": "",
-            "heat": 0,
-            "record": {"wins": 0, "losses": 0, "draws": 0},
-            "injured": False,
-            "injury_duration": 0,
-            "titles": [],
-            "rivalry_id": None,
-            "heat_modifier": 0,
-            "overall_modifier": 0,
+            "attributes": merged_attributes,
+            "image": image or "",
+            "heat": int(heat),
+            "record": record or {"wins": 0, "losses": 0, "draws": 0},
+            "injured": bool(injured),
+            "injury_duration": int(injury_duration),
+            "titles": list(titles or []),
+            "rivalry_id": rivalry_id,
+            "heat_modifier": int(heat_modifier),
+            "overall_modifier": int(overall_modifier),
         }
 
-    def add_wrestler(self, name, persona, finisher, overall):
-        new_wrestler = self._baseline_wrestler(name, persona, finisher, overall)
-        repository.create_wrestler(new_wrestler)
+    def add_wrestler(self, wrestler: dict):
+        repository.create_wrestler(wrestler)
         self.reload()
 
-    def update_wrestler(self, existing_name, persona, finisher, overall):
-        updates = {
-            "persona": persona or None,
-            "finisher": finisher if finisher is not None else None,
-            "overall": int(overall),
-        }
-        cleaned_updates = {k: v for k, v in updates.items() if v is not None}
-        repository.update_wrestler(existing_name, cleaned_updates)
+    def update_wrestler(self, existing_name: str, wrestler: dict):
+        repository.update_wrestler(existing_name, wrestler)
+        self.reload()
+
+    def delete_wrestler(self, name: str):
+        repository.delete_wrestler(name)
         self.reload()
 
     def add_belt(self, name, holder, prestige):
@@ -133,8 +151,28 @@ class DataStore:
                 return
         raise ValueError(f"Belt '{existing_name}' not found.")
 
+    def delete_belt(self, name: str):
+        repository.delete_belt(name)
+        self.reload()
+
 
 class WrestlerForm(tk.Toplevel):
+    ATTRIBUTE_FIELDS = [
+        ("strength", "Strength"),
+        ("speed", "Speed"),
+        ("savvy", "Savvy"),
+        ("technical", "Technical"),
+        ("cheating", "Cheating"),
+        ("size", "Size"),
+        ("heat", "Heat"),
+        ("cage", "Cage"),
+        ("object", "Object"),
+        ("brawling", "Brawling"),
+        ("ladder", "Ladder"),
+        ("table", "Table"),
+        ("tag", "Tag"),
+    ]
+
     def __init__(self, master, datastore: DataStore, on_save, existing=None):
         super().__init__(master)
         self.title("Wrestler")
@@ -142,63 +180,158 @@ class WrestlerForm(tk.Toplevel):
         self.on_save = on_save
         self.existing = existing
 
-        name_label = ttk.Label(self, text="Name")
-        persona_label = ttk.Label(self, text="Persona")
-        finisher_label = ttk.Label(self, text="Finisher")
-        overall_label = ttk.Label(self, text="Overall")
+        record = (existing or {}).get("record", {}) or {}
+        attr_defaults = (existing or {}).get("attributes", {}) or {}
 
-        self.name_var = tk.StringVar(value=existing.get("name") if existing else "")
-        self.persona_var = tk.StringVar(value=existing.get("persona") if existing else "Face")
-        self.finisher_var = tk.StringVar(value=existing.get("finisher") if existing else "")
-        self.overall_var = tk.StringVar(value=str(existing.get("overall", 1000)) if existing else "1000")
+        self.name_var = tk.StringVar(value=(existing or {}).get("name", ""))
+        self.persona_var = tk.StringVar(value=(existing or {}).get("persona", "Face"))
+        self.finisher_var = tk.StringVar(value=(existing or {}).get("finisher", ""))
+        self.rivalry_var = tk.StringVar(value=(existing or {}).get("rivalry_id") or "")
+        self.titles_var = tk.StringVar(value=", ".join((existing or {}).get("titles", [])))
 
-        name_entry = ttk.Entry(self, textvariable=self.name_var, state="disabled" if existing else "normal")
-        persona_combo = ttk.Combobox(self, values=["Face", "Heel"], textvariable=self.persona_var, state="readonly")
-        finisher_entry = ttk.Entry(self, textvariable=self.finisher_var)
-        overall_entry = ttk.Entry(self, textvariable=self.overall_var)
+        self.overall_var = tk.StringVar(value=str((existing or {}).get("overall", 1000)))
+        self.overall_modifier_var = tk.StringVar(value=str((existing or {}).get("overall_modifier", 0) or 0))
+        self.heat_modifier_var = tk.StringVar(value=str((existing or {}).get("heat_modifier", 0) or 0))
+        self.heat_var = tk.StringVar(value=str((existing or {}).get("heat", 0) or 0))
 
-        save_button = ttk.Button(self, text="Save", command=self._save)
-        cancel_button = ttk.Button(self, text="Cancel", command=self.destroy)
+        self.injured_var = tk.BooleanVar(value=bool((existing or {}).get("injured", False)))
+        self.injury_duration_var = tk.StringVar(value=str((existing or {}).get("injury_duration", 0)))
 
-        name_label.grid(row=0, column=0, sticky="e", padx=5, pady=5)
-        name_entry.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
-        persona_label.grid(row=1, column=0, sticky="e", padx=5, pady=5)
-        persona_combo.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
-        finisher_label.grid(row=2, column=0, sticky="e", padx=5, pady=5)
-        finisher_entry.grid(row=2, column=1, sticky="ew", padx=5, pady=5)
-        overall_label.grid(row=3, column=0, sticky="e", padx=5, pady=5)
-        overall_entry.grid(row=3, column=1, sticky="ew", padx=5, pady=5)
+        self.wins_var = tk.StringVar(value=str(record.get("wins", 0)))
+        self.losses_var = tk.StringVar(value=str(record.get("losses", 0)))
+        self.draws_var = tk.StringVar(value=str(record.get("draws", 0)))
+
+        self.attribute_vars = {}
+        base_attr = self.datastore._baseline_wrestler("temp", "Face", "", 0)["attributes"]
+        for key, _ in self.ATTRIBUTE_FIELDS:
+            self.attribute_vars[key] = tk.StringVar(value=str(attr_defaults.get(key, base_attr.get(key, 0))))
+
+        identity_frame = ttk.LabelFrame(self, text="Identity")
+        ttk.Label(identity_frame, text="Name").grid(row=0, column=0, sticky="e", padx=5, pady=3)
+        ttk.Entry(identity_frame, textvariable=self.name_var).grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Label(identity_frame, text="Persona").grid(row=1, column=0, sticky="e", padx=5, pady=3)
+        persona_combo = ttk.Combobox(identity_frame, values=["Face", "Heel"], textvariable=self.persona_var, state="readonly")
+        persona_combo.grid(row=1, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Label(identity_frame, text="Finisher").grid(row=2, column=0, sticky="e", padx=5, pady=3)
+        ttk.Entry(identity_frame, textvariable=self.finisher_var).grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Label(identity_frame, text="Rivalry ID").grid(row=3, column=0, sticky="e", padx=5, pady=3)
+        ttk.Entry(identity_frame, textvariable=self.rivalry_var).grid(row=3, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Label(identity_frame, text="Titles (comma-separated)").grid(row=4, column=0, sticky="e", padx=5, pady=3)
+        ttk.Entry(identity_frame, textvariable=self.titles_var).grid(row=4, column=1, sticky="ew", padx=5, pady=3)
+
+        identity_frame.columnconfigure(1, weight=1)
+        identity_frame.grid(row=0, column=0, sticky="ew", padx=8, pady=6)
+
+        rating_frame = ttk.LabelFrame(self, text="Ratings & Status")
+        ttk.Label(rating_frame, text="Overall").grid(row=0, column=0, sticky="e", padx=5, pady=3)
+        ttk.Entry(rating_frame, textvariable=self.overall_var).grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Label(rating_frame, text="Overall Modifier").grid(row=1, column=0, sticky="e", padx=5, pady=3)
+        ttk.Entry(rating_frame, textvariable=self.overall_modifier_var).grid(row=1, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Label(rating_frame, text="Heat Modifier").grid(row=2, column=0, sticky="e", padx=5, pady=3)
+        ttk.Entry(rating_frame, textvariable=self.heat_modifier_var).grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Label(rating_frame, text="Heat").grid(row=3, column=0, sticky="e", padx=5, pady=3)
+        ttk.Entry(rating_frame, textvariable=self.heat_var).grid(row=3, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Checkbutton(rating_frame, text="Injured", variable=self.injured_var).grid(row=0, column=2, sticky="w", padx=5, pady=3)
+        ttk.Label(rating_frame, text="Injury Duration").grid(row=1, column=2, sticky="e", padx=5, pady=3)
+        ttk.Entry(rating_frame, textvariable=self.injury_duration_var, width=8).grid(row=1, column=3, sticky="w", padx=5, pady=3)
+
+        ttk.Label(rating_frame, text="Wins / Losses / Draws").grid(row=2, column=2, sticky="e", padx=5, pady=3)
+        record_frame = ttk.Frame(rating_frame)
+        ttk.Entry(record_frame, width=6, textvariable=self.wins_var).pack(side=tk.LEFT, padx=2)
+        ttk.Entry(record_frame, width=6, textvariable=self.losses_var).pack(side=tk.LEFT, padx=2)
+        ttk.Entry(record_frame, width=6, textvariable=self.draws_var).pack(side=tk.LEFT, padx=2)
+        record_frame.grid(row=2, column=3, sticky="w", padx=5, pady=3)
+
+        rating_frame.columnconfigure(1, weight=1)
+        rating_frame.columnconfigure(3, weight=1)
+        rating_frame.grid(row=1, column=0, sticky="ew", padx=8, pady=6)
+
+        attr_frame = ttk.LabelFrame(self, text="Attributes")
+        for idx, (key, label) in enumerate(self.ATTRIBUTE_FIELDS):
+            row = idx // 2
+            col = (idx % 2) * 2
+            ttk.Label(attr_frame, text=label).grid(row=row, column=col, sticky="e", padx=5, pady=3)
+            ttk.Entry(attr_frame, textvariable=self.attribute_vars[key], width=10).grid(row=row, column=col + 1, sticky="w", padx=5, pady=3)
+
+        attr_frame.columnconfigure(1, weight=1)
+        attr_frame.columnconfigure(3, weight=1)
+        attr_frame.grid(row=2, column=0, sticky="ew", padx=8, pady=6)
 
         button_frame = ttk.Frame(self)
-        button_frame.grid(row=4, column=0, columnspan=2, pady=5)
-        save_button.pack(side=tk.LEFT, padx=5)
-        cancel_button.pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Save", command=self._save).pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="Cancel", command=self.destroy).pack(side=tk.LEFT, padx=5)
+        button_frame.grid(row=3, column=0, pady=8)
 
-        self.columnconfigure(1, weight=1)
+        self.columnconfigure(0, weight=1)
         self.resizable(False, False)
 
     def _save(self):
         name = self.name_var.get().strip()
         persona = self.persona_var.get().strip() or "Face"
         finisher = self.finisher_var.get().strip()
-        overall_raw = self.overall_var.get().strip()
         if not name:
             messagebox.showerror("Error", "Name is required.")
             return
         try:
-            overall = int(overall_raw)
-        except ValueError:
-            messagebox.showerror("Error", "Overall must be a number.")
+            overall = int(self.overall_var.get().strip())
+            overall_mod = int(self.overall_modifier_var.get().strip() or 0)
+            heat_mod = int(self.heat_modifier_var.get().strip() or 0)
+            heat = int(self.heat_var.get().strip() or 0)
+            injury_duration = int(self.injury_duration_var.get().strip() or 0)
+            wins = int(self.wins_var.get().strip() or 0)
+            losses = int(self.losses_var.get().strip() or 0)
+            draws = int(self.draws_var.get().strip() or 0)
+        except ValueError as exc:
+            messagebox.showerror("Error", f"Numeric field invalid: {exc}")
             return
 
+        attributes = {}
         try:
-            if self.existing:
-                self.datastore.update_wrestler(self.existing.get("name"), persona, finisher, overall)
-            else:
-                self.datastore.add_wrestler(name, persona, finisher, overall)
+            for key, var in self.attribute_vars.items():
+                attributes[key] = int(var.get().strip() or 0)
         except ValueError as exc:
-            messagebox.showerror("Error", str(exc))
+            messagebox.showerror("Error", f"Attribute values must be numbers: {exc}")
             return
+
+        titles = [t.strip() for t in self.titles_var.get().split(",") if t.strip()]
+        record = {"wins": wins, "losses": losses, "draws": draws}
+        payload = self.datastore._baseline_wrestler(
+            name,
+            persona,
+            finisher,
+            overall,
+            attributes=attributes,
+            heat_modifier=heat_mod,
+            overall_modifier=overall_mod,
+            rivalry_id=self.rivalry_var.get().strip() or None,
+            injured=self.injured_var.get(),
+            injury_duration=injury_duration,
+            titles=titles,
+            record=record,
+            heat=heat,
+            image=(self.existing or {}).get("image", ""),
+        )
+        if self.existing:
+            merged_payload = {**self.existing, **payload}
+            try:
+                self.datastore.update_wrestler(self.existing.get("name"), merged_payload)
+            except ValueError as exc:
+                messagebox.showerror("Error", str(exc))
+                return
+        else:
+            try:
+                self.datastore.add_wrestler(payload)
+            except ValueError as exc:
+                messagebox.showerror("Error", str(exc))
+                return
 
         self.on_save()
         self.destroy()
@@ -468,7 +601,30 @@ class MatchPanel(ttk.Frame):
         super().__init__(master, padding=10)
         self.datastore = datastore
         self.on_timeline_update = on_timeline_update
+        self._init_advanced_rule_vars()
         self._build_widgets()
+
+    def _init_advanced_rule_vars(self):
+        defaults = AdvancedRulesConfig()
+        self._advanced_defaults = defaults
+        self.advanced_enabled_var = tk.BooleanVar(value=False)
+        self.enable_injuries_var = tk.BooleanVar(value=defaults.enable_injuries)
+        self.enable_titles_var = tk.BooleanVar(value=defaults.enable_titles)
+        self.enable_rivalries_var = tk.BooleanVar(value=defaults.enable_rivalries)
+        self.enable_heat_var = tk.BooleanVar(value=defaults.enable_heat)
+        self.enable_seasons_var = tk.BooleanVar(value=defaults.enable_seasons)
+        self.enable_persistent_modifiers_var = tk.BooleanVar(value=defaults.enable_persistent_modifiers)
+        self.enable_title_overall_bonus_var = tk.BooleanVar(value=defaults.enable_title_overall_bonus)
+        self.heat_change_on_titles_var = tk.BooleanVar(value=defaults.heat_change_on_titles)
+        self.clean_win_bonus_var = tk.StringVar(value=str(defaults.clean_win_bonus))
+        self.clean_loss_penalty_var = tk.StringVar(value=str(defaults.clean_loss_penalty))
+        self.title_overall_bonus_var = tk.StringVar(value=str(defaults.title_overall_bonus))
+        self.injury_chance_var = tk.StringVar(value=str(defaults.injury_chance))
+        self.base_heat_delta_var = tk.StringVar(value=str(defaults.base_heat_delta))
+        self.season_length_var = tk.StringVar(value=str(defaults.season_length))
+        self.title_on_the_line_var = tk.StringVar()
+        self._advanced_entries: list[ttk.Entry] = []
+        self._advanced_checkbuttons: list[ttk.Checkbutton] = []
 
     def _build_widgets(self):
         ttk.Label(self, text="Match Simulation", font=("TkDefaultFont", 12, "bold")).grid(
@@ -498,13 +654,6 @@ class MatchPanel(ttk.Frame):
         if self._match_types():
             self.match_type_var.set(self._match_types()[0])
 
-        simulate_button = ttk.Button(self, text="Simulate", command=self._simulate)
-
-        log_frame = ttk.LabelFrame(self, text="Result Log")
-        self.log_text = tk.Text(log_frame, height=15, wrap=tk.WORD, state=tk.DISABLED)
-        log_scroll = ttk.Scrollbar(log_frame, command=self.log_text.yview)
-        self.log_text.configure(yscrollcommand=log_scroll.set)
-
         self.event_combo.grid(row=1, column=1, sticky="ew", padx=5, pady=2)
         self.storyline_combo.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
         self.face_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
@@ -512,16 +661,115 @@ class MatchPanel(ttk.Frame):
         self.match_type_combo.grid(row=5, column=1, sticky="ew", padx=5, pady=2)
         ttk.Label(self, text="Belts on the line (optional)").grid(row=6, column=0, sticky="nw", pady=2)
         self.belt_list.grid(row=6, column=1, sticky="ew", padx=5, pady=2)
-        simulate_button.grid(row=7, column=0, columnspan=2, pady=8)
 
-        log_frame.grid(row=8, column=0, columnspan=2, sticky="nsew", pady=5)
+        advanced_frame = self._build_advanced_rules_frame()
+        advanced_frame.grid(row=7, column=0, columnspan=2, sticky="ew", pady=6)
+
+        simulate_button = ttk.Button(self, text="Simulate", command=self._simulate)
+        simulate_button.grid(row=8, column=0, columnspan=2, pady=8)
+
+        log_frame = ttk.LabelFrame(self, text="Result Log")
+        self.log_text = tk.Text(log_frame, height=15, wrap=tk.WORD, state=tk.DISABLED)
+        log_scroll = ttk.Scrollbar(log_frame, command=self.log_text.yview)
+        self.log_text.configure(yscrollcommand=log_scroll.set)
+
+        log_frame.grid(row=9, column=0, columnspan=2, sticky="nsew", pady=5)
         self.log_text.grid(row=0, column=0, sticky="nsew")
         log_scroll.grid(row=0, column=1, sticky="ns")
         log_frame.columnconfigure(0, weight=1)
         log_frame.rowconfigure(0, weight=1)
 
         self.columnconfigure(1, weight=1)
-        self.rowconfigure(8, weight=1)
+        self.rowconfigure(9, weight=1)
+
+    def _build_advanced_rules_frame(self):
+        frame = ttk.LabelFrame(self, text="Advanced Rules")
+        ttk.Checkbutton(frame, text="Enable advanced rules", variable=self.advanced_enabled_var, command=self._toggle_advanced_controls).grid(
+            row=0, column=0, sticky="w", padx=5, pady=2
+        )
+
+        toggles = [
+            ("Injuries", self.enable_injuries_var),
+            ("Titles", self.enable_titles_var),
+            ("Rivalries", self.enable_rivalries_var),
+            ("Heat", self.enable_heat_var),
+            ("Seasons", self.enable_seasons_var),
+            ("Persistent Modifiers", self.enable_persistent_modifiers_var),
+            ("Title Overall Bonus", self.enable_title_overall_bonus_var),
+            ("Heat on Title Changes", self.heat_change_on_titles_var),
+        ]
+        toggle_frame = ttk.Frame(frame)
+        for idx, (label, var) in enumerate(toggles):
+            chk = ttk.Checkbutton(toggle_frame, text=label, variable=var)
+            chk.grid(row=idx // 3, column=idx % 3, sticky="w", padx=4, pady=2)
+            self._advanced_checkbuttons.append(chk)
+        toggle_frame.grid(row=1, column=0, columnspan=6, sticky="w")
+
+        numeric_fields = [
+            ("Clean Win Bonus", self.clean_win_bonus_var),
+            ("Clean Loss Penalty", self.clean_loss_penalty_var),
+            ("Title Overall Bonus", self.title_overall_bonus_var),
+            ("Injury Chance", self.injury_chance_var),
+            ("Base Heat Delta", self.base_heat_delta_var),
+            ("Season Length", self.season_length_var),
+        ]
+        for idx, (label, var) in enumerate(numeric_fields):
+            row = idx // 3
+            col = (idx % 3) * 2
+            ttk.Label(frame, text=label).grid(row=row + 2, column=col, sticky="e", padx=4, pady=2)
+            entry = ttk.Entry(frame, textvariable=var, width=10)
+            entry.grid(row=row + 2, column=col + 1, sticky="w", padx=4, pady=2)
+            self._advanced_entries.append(entry)
+
+        last_row = 2 + (len(numeric_fields) - 1) // 3
+        ttk.Label(frame, text="Title on the Line (optional)").grid(row=last_row + 1, column=0, sticky="e", padx=4, pady=2)
+        title_entry = ttk.Entry(frame, textvariable=self.title_on_the_line_var)
+        title_entry.grid(row=last_row + 1, column=1, sticky="w", padx=4, pady=2, columnspan=3)
+        self._advanced_entries.append(title_entry)
+
+        for col in range(6):
+            frame.columnconfigure(col, weight=1)
+        self._toggle_advanced_controls()
+        return frame
+
+    def _toggle_advanced_controls(self):
+        state = "normal" if self.advanced_enabled_var.get() else "disabled"
+        for widget in self._advanced_entries:
+            widget.configure(state=state)
+        for widget in self._advanced_checkbuttons:
+            if state == "disabled":
+                widget.state(["disabled"])
+            else:
+                widget.state(["!disabled"])
+
+    def _collect_advanced_config(self):
+        if not self.advanced_enabled_var.get():
+            return None
+        try:
+            config = {
+                "enabled": True,
+                "enable_injuries": self.enable_injuries_var.get(),
+                "enable_titles": self.enable_titles_var.get(),
+                "enable_rivalries": self.enable_rivalries_var.get(),
+                "enable_heat": self.enable_heat_var.get(),
+                "enable_seasons": self.enable_seasons_var.get(),
+                "enable_persistent_modifiers": self.enable_persistent_modifiers_var.get(),
+                "enable_title_overall_bonus": self.enable_title_overall_bonus_var.get(),
+                "heat_change_on_titles": self.heat_change_on_titles_var.get(),
+                "clean_win_bonus": int(self.clean_win_bonus_var.get() or 0),
+                "clean_loss_penalty": int(self.clean_loss_penalty_var.get() or 0),
+                "title_overall_bonus": int(self.title_overall_bonus_var.get() or 0),
+                "injury_chance": float(self.injury_chance_var.get() or self._advanced_defaults.injury_chance),
+                "base_heat_delta": int(self.base_heat_delta_var.get() or self._advanced_defaults.base_heat_delta),
+                "season_length": int(self.season_length_var.get() or self._advanced_defaults.season_length),
+            }
+        except ValueError as exc:
+            raise ValueError(f"Invalid advanced rule value: {exc}")
+
+        title_on_the_line = self.title_on_the_line_var.get().strip()
+        if title_on_the_line:
+            config["title_on_the_line"] = title_on_the_line
+        return config
 
     def _match_types(self):
         game_data = self.datastore.game_data or {}
@@ -600,7 +848,20 @@ class MatchPanel(ttk.Frame):
             event_id=event_id, match_id=match_card_id, storyline_id=storyline_id, belts=belts
         )
         try:
-            match = create_match(face, heel, match_type, self.datastore.game_data, assigned_roles, booking_context=booking_context)
+            advanced_config = self._collect_advanced_config()
+        except ValueError as exc:
+            messagebox.showerror("Advanced Rules", str(exc))
+            return
+        try:
+            match = create_match(
+                face,
+                heel,
+                match_type,
+                self.datastore.game_data,
+                assigned_roles,
+                booking_context=booking_context,
+                advanced_rules_config=advanced_config,
+            )
             log_output = match.simulate()
         except Exception as exc:
             messagebox.showerror("Simulation error", str(exc))
@@ -666,10 +927,12 @@ class Application(tk.Tk):
         controls = ttk.Frame(parent)
         add_btn = ttk.Button(controls, text="Add Wrestler", command=self._open_add_wrestler)
         edit_btn = ttk.Button(controls, text="Edit Selected", command=self._open_edit_wrestler)
+        delete_btn = ttk.Button(controls, text="Delete Selected", command=self._delete_wrestler)
         refresh_btn = ttk.Button(controls, text="Refresh", command=self._refresh_all)
 
         add_btn.pack(side=tk.LEFT, padx=5)
         edit_btn.pack(side=tk.LEFT, padx=5)
+        delete_btn.pack(side=tk.LEFT, padx=5)
         refresh_btn.pack(side=tk.LEFT, padx=5)
 
         self.wrestler_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=5)
@@ -697,10 +960,12 @@ class Application(tk.Tk):
         controls = ttk.Frame(parent)
         add_btn = ttk.Button(controls, text="Add Belt", command=self._open_add_belt)
         edit_btn = ttk.Button(controls, text="Edit Selected", command=self._open_edit_belt)
+        delete_btn = ttk.Button(controls, text="Delete Selected", command=self._delete_belt)
         refresh_btn = ttk.Button(controls, text="Refresh", command=self._refresh_all)
 
         add_btn.pack(side=tk.LEFT, padx=5)
         edit_btn.pack(side=tk.LEFT, padx=5)
+        delete_btn.pack(side=tk.LEFT, padx=5)
         refresh_btn.pack(side=tk.LEFT, padx=5)
 
         self.belt_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=5)
@@ -734,6 +999,20 @@ class Application(tk.Tk):
         if wrestler:
             WrestlerForm(self, self.datastore, on_save=self._refresh_all, existing=wrestler)
 
+    def _delete_wrestler(self):
+        selection = self.wrestler_tree.selection()
+        if not selection:
+            messagebox.showinfo("Info", "Select a wrestler to delete.")
+            return
+        name = selection[0]
+        if not messagebox.askyesno("Confirm", f"Delete wrestler '{name}'?"):
+            return
+        try:
+            self.datastore.delete_wrestler(name)
+            self._refresh_all()
+        except ValueError as exc:
+            messagebox.showerror("Error", str(exc))
+
     def _open_add_belt(self):
         BeltForm(self, self.datastore, on_save=self._refresh_all)
 
@@ -746,6 +1025,20 @@ class Application(tk.Tk):
         belt = next((b for b in self.datastore.belts if b.get("name") == name), None)
         if belt:
             BeltForm(self, self.datastore, on_save=self._refresh_all, existing=belt)
+
+    def _delete_belt(self):
+        selection = self.belt_tree.selection()
+        if not selection:
+            messagebox.showinfo("Info", "Select a belt to delete.")
+            return
+        name = selection[0]
+        if not messagebox.askyesno("Confirm", f"Delete belt '{name}'?"):
+            return
+        try:
+            self.datastore.delete_belt(name)
+            self._refresh_all()
+        except ValueError as exc:
+            messagebox.showerror("Error", str(exc))
 
     def _refresh_all(self):
         self.datastore.reload()

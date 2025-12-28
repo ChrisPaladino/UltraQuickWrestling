@@ -142,6 +142,15 @@ def delete_wrestler(name: str) -> None:
     save_wrestlers(new_roster)
 
 
+def delete_belt(name: str) -> None:
+    belts = load_belts()
+    new_belts = [b for b in belts if b.get("name", "").lower() != name.lower()]
+    if len(new_belts) == len(belts):
+        raise ValueError(f"Belt named '{name}' does not exist.")
+
+    save_belts(new_belts)
+
+
 def assign_belt(belt_name: str, holder_name: str) -> Dict[str, Any]:
     wrestlers = load_wrestlers()
     if not any(w.get("name", "").lower() == holder_name.lower() for w in wrestlers):
