@@ -30,6 +30,15 @@ class DataStore:
     def wrestler_names(self):
         return [w.get("name", "") for w in self.wrestlers]
 
+    def wrestler_display_labels(self):
+        labels = []
+        for w in self.wrestlers:
+            name = w.get("name", "")
+            persona = w.get("persona", "Face")
+            overall = w.get("overall", 0)
+            labels.append((f"{name} ({persona[0] if persona else '?'} / {overall})", name))
+        return labels
+
     def belt_names(self):
         return [b.get("name", "") for b in self.belts]
 
@@ -42,11 +51,19 @@ class DataStore:
     def get_event_by_name(self, name: str):
         return next((e for e in self.events if e.get("name", "").lower() == (name or "").lower()), None)
 
+    def get_event_by_id(self, event_id: str):
+        return next((e for e in self.events if e.get("id") == event_id), None)
+
     def create_event(self, name: str, date: str, venue: str):
         event = booking.EventCard(name=name, date=date or datetime.utcnow().strftime("%Y-%m-%d"), venue=venue or "")
         booking.upsert_event(event)
         self.reload()
         return event
+
+    def update_event(self, event_id: str, name: str, date: str, venue: str, notes: str = ""):
+        updated = booking.update_event(event_id, name=name, date=date, venue=venue, notes=notes)
+        self.reload()
+        return updated
 
     def create_storyline(self, name: str, participants):
         storyline = booking.Storyline(name=name, participants=list(participants))
@@ -65,6 +82,14 @@ class DataStore:
         booking.add_match_to_event(event_id, card_match)
         self.reload()
         return card_match
+
+    def remove_match_from_event(self, event_id: str, match_id: str):
+        booking.remove_match_from_event(event_id, match_id)
+        self.reload()
+
+    def update_timeline_notes(self, index: int, notes: str):
+        booking.update_timeline_entry(index, {"notes": notes})
+        self.reload()
 
     def _baseline_wrestler(
         self,
@@ -402,9 +427,12 @@ class BeltForm(tk.Toplevel):
 
 
 class BookingPanel(ttk.Frame):
-    def __init__(self, master, datastore: DataStore):
+    def __init__(self, master, datastore: DataStore, on_change=None):
         super().__init__(master, padding=10)
         self.datastore = datastore
+        self.on_change = on_change
+        self.selected_event_id: str | None = None
+        self._roster_label_to_name: dict[str, str] = {}
         self._build_widgets()
         self.refresh()
 
@@ -415,6 +443,7 @@ class BookingPanel(ttk.Frame):
         ttk.Label(form, text="Event Name").grid(row=0, column=0, sticky="e", padx=5, pady=2)
         ttk.Label(form, text="Date (YYYY-MM-DD)").grid(row=1, column=0, sticky="e", padx=5, pady=2)
         ttk.Label(form, text="Venue").grid(row=2, column=0, sticky="e", padx=5, pady=2)
+        ttk.Label(form, text="Event Notes").grid(row=3, column=0, sticky="ne", padx=5, pady=2)
 
         self.event_name_var = tk.StringVar()
         self.event_date_var = tk.StringVar(value=datetime.utcnow().strftime("%Y-%m-%d"))
@@ -423,19 +452,24 @@ class BookingPanel(ttk.Frame):
         ttk.Entry(form, textvariable=self.event_name_var).grid(row=0, column=1, sticky="ew", padx=5, pady=2)
         ttk.Entry(form, textvariable=self.event_date_var).grid(row=1, column=1, sticky="ew", padx=5, pady=2)
         ttk.Entry(form, textvariable=self.event_venue_var).grid(row=2, column=1, sticky="ew", padx=5, pady=2)
+        self.event_notes_text = tk.Text(form, height=3, width=40)
+        self.event_notes_text.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
 
         self.storyline_name_var = tk.StringVar()
         self.storyline_participants_var = tk.StringVar()
-        ttk.Label(form, text="Storyline Name").grid(row=3, column=0, sticky="e", padx=5, pady=2)
-        ttk.Label(form, text="Participants (comma separated)").grid(row=4, column=0, sticky="e", padx=5, pady=2)
-        ttk.Entry(form, textvariable=self.storyline_name_var).grid(row=3, column=1, sticky="ew", padx=5, pady=2)
-        ttk.Entry(form, textvariable=self.storyline_participants_var).grid(row=4, column=1, sticky="ew", padx=5, pady=2)
+        ttk.Label(form, text="Storyline Name").grid(row=4, column=0, sticky="e", padx=5, pady=2)
+        ttk.Label(form, text="Participants (comma separated)").grid(row=5, column=0, sticky="e", padx=5, pady=2)
+        ttk.Entry(form, textvariable=self.storyline_name_var).grid(row=4, column=1, sticky="ew", padx=5, pady=2)
+        ttk.Entry(form, textvariable=self.storyline_participants_var).grid(row=5, column=1, sticky="ew", padx=5, pady=2)
 
-        add_event_btn = ttk.Button(form, text="Add Event", command=self._add_event)
-        add_event_btn.grid(row=5, column=0, sticky="ew", padx=5, pady=4)
-
-        add_storyline_btn = ttk.Button(form, text="Add Storyline", command=self._add_storyline)
-        add_storyline_btn.grid(row=5, column=1, sticky="ew", padx=5, pady=4)
+        action_buttons = ttk.Frame(form)
+        add_event_btn = ttk.Button(action_buttons, text="Save Event", command=self._add_or_update_event)
+        new_event_btn = ttk.Button(action_buttons, text="New Event", command=self._new_event)
+        add_storyline_btn = ttk.Button(action_buttons, text="Add Storyline", command=self._add_storyline)
+        add_event_btn.pack(side=tk.LEFT, padx=4)
+        new_event_btn.pack(side=tk.LEFT, padx=4)
+        add_storyline_btn.pack(side=tk.LEFT, padx=4)
+        action_buttons.grid(row=6, column=0, columnspan=2, sticky="w", padx=5, pady=4)
 
         form.columnconfigure(1, weight=1)
         form.grid(row=1, column=0, sticky="ew")
@@ -449,21 +483,19 @@ class BookingPanel(ttk.Frame):
         ttk.Label(card, text="Belts on the line").grid(row=5, column=0, sticky="nw", padx=5, pady=2)
 
         self.card_event_var = tk.StringVar()
-        self.card_face_var = tk.StringVar()
-        self.card_heel_var = tk.StringVar()
         self.card_match_type_var = tk.StringVar()
         self.card_storyline_var = tk.StringVar()
 
-        self.card_event_combo = ttk.Combobox(card, textvariable=self.card_event_var)
-        self.card_face_entry = ttk.Entry(card, textvariable=self.card_face_var)
-        self.card_heel_entry = ttk.Entry(card, textvariable=self.card_heel_var)
-        self.card_match_type_combo = ttk.Combobox(card, textvariable=self.card_match_type_var)
+        self.card_event_combo = ttk.Combobox(card, textvariable=self.card_event_var, state="readonly")
+        self.card_face_list = tk.Listbox(card, selectmode=tk.EXTENDED, height=5, exportselection=False)
+        self.card_heel_list = tk.Listbox(card, selectmode=tk.EXTENDED, height=5, exportselection=False)
+        self.card_match_type_combo = ttk.Combobox(card, textvariable=self.card_match_type_var, state="readonly")
         self.card_storyline_combo = ttk.Combobox(card, textvariable=self.card_storyline_var)
         self.card_belts_list = tk.Listbox(card, selectmode=tk.MULTIPLE, height=4, exportselection=False)
 
         self.card_event_combo.grid(row=0, column=1, sticky="ew", padx=5, pady=2)
-        self.card_face_entry.grid(row=1, column=1, sticky="ew", padx=5, pady=2)
-        self.card_heel_entry.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
+        self.card_face_list.grid(row=1, column=1, sticky="ew", padx=5, pady=2)
+        self.card_heel_list.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
         self.card_match_type_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
         self.card_storyline_combo.grid(row=4, column=1, sticky="ew", padx=5, pady=2)
         self.card_belts_list.grid(row=5, column=1, sticky="ew", padx=5, pady=2)
@@ -474,9 +506,47 @@ class BookingPanel(ttk.Frame):
         card.columnconfigure(1, weight=1)
         card.grid(row=2, column=0, sticky="ew", pady=8)
 
+        events_frame = ttk.LabelFrame(self, text="Events")
+        event_columns = ("name", "date", "venue")
+        self.event_tree = ttk.Treeview(events_frame, columns=event_columns, show="headings", height=6, selectmode="browse")
+        self.event_tree.heading("name", text="Name")
+        self.event_tree.heading("date", text="Date")
+        self.event_tree.heading("venue", text="Venue")
+        for key in event_columns:
+            self.event_tree.column(key, width=140 if key == "name" else 110, anchor="w")
+        self.event_tree.bind("<<TreeviewSelect>>", self._on_event_select)
+        event_scroll = ttk.Scrollbar(events_frame, orient=tk.VERTICAL, command=self.event_tree.yview)
+        self.event_tree.configure(yscrollcommand=event_scroll.set)
+        self.event_tree.grid(row=0, column=0, sticky="nsew")
+        event_scroll.grid(row=0, column=1, sticky="ns")
+        events_frame.columnconfigure(0, weight=1)
+        events_frame.grid(row=3, column=0, sticky="nsew", pady=6)
+
+        card_frame = ttk.LabelFrame(self, text="Card (selected event)")
+        card_columns = ("match", "faces", "heels", "belts", "storyline")
+        self.card_tree = ttk.Treeview(card_frame, columns=card_columns, show="headings", height=6)
+        headings = {
+            "match": "Match Type",
+            "faces": "Face Side",
+            "heels": "Heel Side",
+            "belts": "Belts",
+            "storyline": "Storyline",
+        }
+        for key, title in headings.items():
+            self.card_tree.heading(key, text=title)
+            self.card_tree.column(key, width=140 if key in {"match", "storyline"} else 160, anchor="w")
+        card_scroll = ttk.Scrollbar(card_frame, orient=tk.VERTICAL, command=self.card_tree.yview)
+        self.card_tree.configure(yscrollcommand=card_scroll.set)
+        self.card_tree.grid(row=0, column=0, sticky="nsew")
+        card_scroll.grid(row=0, column=1, sticky="ns")
+        remove_match_btn = ttk.Button(card_frame, text="Remove Selected Match", command=self._remove_selected_match)
+        remove_match_btn.grid(row=1, column=0, sticky="w", padx=5, pady=4)
+        card_frame.columnconfigure(0, weight=1)
+        card_frame.grid(row=4, column=0, sticky="nsew")
+
         timeline_frame = ttk.LabelFrame(self, text="Timeline")
-        columns = ("date", "event", "match", "winner", "belts", "storyline")
-        self.timeline_tree = ttk.Treeview(timeline_frame, columns=columns, show="headings", height=10)
+        columns = ("date", "event", "match", "winner", "belts", "storyline", "notes")
+        self.timeline_tree = ttk.Treeview(timeline_frame, columns=columns, show="headings", height=8)
         headings = {
             "date": "Date",
             "event": "Event",
@@ -484,6 +554,7 @@ class BookingPanel(ttk.Frame):
             "winner": "Winner",
             "belts": "Belts",
             "storyline": "Storyline",
+            "notes": "Notes",
         }
         for key, title in headings.items():
             self.timeline_tree.heading(key, text=title)
@@ -493,23 +564,61 @@ class BookingPanel(ttk.Frame):
         self.timeline_tree.configure(yscrollcommand=scroll.set)
         self.timeline_tree.grid(row=0, column=0, sticky="nsew")
         scroll.grid(row=0, column=1, sticky="ns")
+        self.timeline_tree.bind("<<TreeviewSelect>>", self._on_timeline_select)
+
+        notes_frame = ttk.Frame(timeline_frame)
+        ttk.Label(notes_frame, text="Match Notes").pack(anchor="w")
+        self.timeline_notes_text = tk.Text(notes_frame, height=4, width=60)
+        self.timeline_notes_text.pack(fill="both", expand=True, pady=2)
+        save_note_btn = ttk.Button(notes_frame, text="Save Notes", command=self._save_timeline_note)
+        save_note_btn.pack(anchor="w", pady=2)
+        notes_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=4, pady=4)
+
         timeline_frame.columnconfigure(0, weight=1)
         timeline_frame.rowconfigure(0, weight=1)
-        timeline_frame.grid(row=3, column=0, sticky="nsew", pady=8)
+        timeline_frame.grid(row=5, column=0, sticky="nsew", pady=8)
 
-        self.rowconfigure(3, weight=1)
+        self.rowconfigure(5, weight=1)
         self.columnconfigure(0, weight=1)
 
     def _parse_side(self, raw_value: str):
         return [part.strip() for part in (raw_value or "").split(",") if part.strip()]
 
-    def _add_event(self):
+    def _notify_changed(self):
+        if callable(self.on_change):
+            self.on_change()
+
+    def _new_event(self):
+        self.selected_event_id = None
+        self.event_name_var.set("")
+        self.event_date_var.set(datetime.utcnow().strftime("%Y-%m-%d"))
+        self.event_venue_var.set("")
+        self._set_event_notes("")
+        self.card_event_var.set("")
+        self.card_tree.delete(*self.card_tree.get_children())
+
+    def _add_or_update_event(self):
         name = self.event_name_var.get().strip()
         if not name:
             messagebox.showerror("Error", "Event name is required.")
             return
-        self.datastore.create_event(name, self.event_date_var.get().strip(), self.event_venue_var.get().strip())
+        date = self.event_date_var.get().strip()
+        venue = self.event_venue_var.get().strip()
+        notes = self._get_event_notes()
+        if self.selected_event_id:
+            try:
+                self.datastore.update_event(self.selected_event_id, name, date, venue, notes)
+            except ValueError as exc:
+                messagebox.showerror("Error", str(exc))
+                return
+        else:
+            event = self.datastore.create_event(name, date, venue)
+            self.selected_event_id = event.id
+            self.card_event_var.set(event.name)
+            if notes:
+                self.datastore.update_event(self.selected_event_id, name, date, venue, notes)
         self.refresh()
+        self._notify_changed()
 
     def _add_storyline(self):
         name = self.storyline_name_var.get().strip()
@@ -522,6 +631,7 @@ class BookingPanel(ttk.Frame):
             return
         self.datastore.create_storyline(name, participants)
         self.refresh()
+        self._notify_changed()
 
     def _add_match_to_event(self):
         event_name = self.card_event_var.get().strip()
@@ -529,10 +639,10 @@ class BookingPanel(ttk.Frame):
         if not event:
             messagebox.showerror("Error", "Select a valid event to attach the match.")
             return
-        face_side = self._parse_side(self.card_face_var.get())
-        heel_side = self._parse_side(self.card_heel_var.get())
+        face_side = self._selected_wrestlers(self.card_face_list)
+        heel_side = self._selected_wrestlers(self.card_heel_list)
         if not face_side or not heel_side:
-            messagebox.showerror("Error", "Provide comma-separated names for both sides.")
+            messagebox.showerror("Error", "Select at least one wrestler for each side.")
             return
         match_type = self.card_match_type_var.get().strip()
         if not match_type:
@@ -552,13 +662,60 @@ class BookingPanel(ttk.Frame):
 
         messagebox.showinfo("Added", "Match added to event card.")
         self.refresh()
+        self._notify_changed()
+
+    def _remove_selected_match(self):
+        selection = self.card_tree.selection()
+        if not selection or not self.selected_event_id:
+            messagebox.showinfo("Info", "Select a match to remove.")
+            return
+        match_id = selection[0]
+        try:
+            self.datastore.remove_match_from_event(self.selected_event_id, match_id)
+        except ValueError as exc:
+            messagebox.showerror("Error", str(exc))
+            return
+        self.refresh()
+        self._notify_changed()
+
+    def _set_event_notes(self, text: str):
+        self.event_notes_text.delete("1.0", tk.END)
+        self.event_notes_text.insert("1.0", text or "")
+
+    def _get_event_notes(self) -> str:
+        return self.event_notes_text.get("1.0", tk.END).strip()
+
+    def _selected_wrestlers(self, listbox: tk.Listbox):
+        indices = listbox.curselection()
+        names = []
+        for idx in indices:
+            label = listbox.get(idx)
+            name = self._roster_label_to_name.get(label, label)
+            names.append(name)
+        return names
+
+    def _on_event_select(self, event):
+        selection = self.event_tree.selection()
+        if not selection:
+            return
+        event_id = selection[0]
+        selected = self.datastore.get_event_by_id(event_id)
+        if not selected:
+            return
+        self.selected_event_id = event_id
+        self.event_name_var.set(selected.get("name", ""))
+        self.event_date_var.set(selected.get("date", ""))
+        self.event_venue_var.set(selected.get("venue", ""))
+        self._set_event_notes(selected.get("notes", ""))
+        self.card_event_var.set(selected.get("name", ""))
+        self._populate_card_matches(selected)
 
     def _populate_timeline(self):
         for row in self.timeline_tree.get_children():
             self.timeline_tree.delete(row)
         events_by_id = {e.get("id"): e.get("name", "") for e in self.datastore.events}
         story_by_id = {s.get("id"): s.get("name", "") for s in self.datastore.storylines}
-        for entry in self.datastore.timeline:
+        for idx, entry in enumerate(self.datastore.timeline):
             event_label = events_by_id.get(entry.get("event_id"), "")
             storyline_label = story_by_id.get(entry.get("storyline_id"), "")
             winner = ", ".join(entry.get("winner", []))
@@ -570,8 +727,35 @@ class BookingPanel(ttk.Frame):
                 winner,
                 belts,
                 storyline_label,
+                entry.get("notes", ""),
             )
-            self.timeline_tree.insert("", tk.END, values=values)
+            self.timeline_tree.insert("", tk.END, iid=str(idx), values=values)
+
+    def _on_timeline_select(self, event):
+        selection = self.timeline_tree.selection()
+        if not selection:
+            self.timeline_notes_text.delete("1.0", tk.END)
+            return
+        idx = int(selection[0])
+        entry = self.datastore.timeline[idx]
+        notes = entry.get("notes", "")
+        self.timeline_notes_text.delete("1.0", tk.END)
+        self.timeline_notes_text.insert("1.0", notes)
+
+    def _save_timeline_note(self):
+        selection = self.timeline_tree.selection()
+        if not selection:
+            messagebox.showinfo("Info", "Select a timeline entry to add notes.")
+            return
+        idx = int(selection[0])
+        notes = self.timeline_notes_text.get("1.0", tk.END).strip()
+        try:
+            self.datastore.update_timeline_notes(idx, notes)
+        except (IndexError, ValueError) as exc:
+            messagebox.showerror("Error", str(exc))
+            return
+        self.refresh()
+        self._notify_changed()
 
     def refresh(self):
         self.datastore.reload()
@@ -585,7 +769,20 @@ class BookingPanel(ttk.Frame):
         self.card_belts_list.delete(0, tk.END)
         for belt in self.datastore.belt_names():
             self.card_belts_list.insert(tk.END, belt)
+        self._roster_label_to_name = {label: name for label, name in self.datastore.wrestler_display_labels()}
+        self.card_face_list.delete(0, tk.END)
+        self.card_heel_list.delete(0, tk.END)
+        for label in self._roster_label_to_name.keys():
+            self.card_face_list.insert(tk.END, label)
+            self.card_heel_list.insert(tk.END, label)
+        self._populate_events()
         self._populate_timeline()
+        if self.selected_event_id:
+            event = self.datastore.get_event_by_id(self.selected_event_id)
+            if event:
+                self._populate_card_matches(event)
+            else:
+                self._new_event()
 
     def match_types(self):
         game_data = self.datastore.game_data or {}
@@ -595,6 +792,42 @@ class BookingPanel(ttk.Frame):
             if match_type not in types:
                 types.append(match_type)
         return types
+
+    def _populate_events(self):
+        selected_id = self.selected_event_id
+        if not selected_id:
+            current_sel = self.event_tree.selection()
+            selected_id = current_sel[0] if current_sel else None
+        for row in self.event_tree.get_children():
+            self.event_tree.delete(row)
+        for event in self.datastore.events:
+            self.event_tree.insert(
+                "",
+                tk.END,
+                iid=event.get("id"),
+                values=(event.get("name", ""), event.get("date", ""), event.get("venue", "")),
+            )
+        if selected_id and self.event_tree.exists(selected_id):
+            self.event_tree.selection_set(selected_id)
+            self.event_tree.see(selected_id)
+
+    def _populate_card_matches(self, event: dict):
+        for row in self.card_tree.get_children():
+            self.card_tree.delete(row)
+        matches = event.get("matches", [])
+        story_by_id = {s.get("id"): s.get("name", "") for s in self.datastore.storylines}
+        for match in matches:
+            storyline_label = story_by_id.get(match.get("storyline_id"), "")
+            belts = ", ".join(match.get("belts", []))
+            faces = ", ".join(match.get("face_side", []))
+            heels = ", ".join(match.get("heel_side", []))
+            match_id = match.get("id", "")
+            self.card_tree.insert(
+                "",
+                tk.END,
+                iid=match_id,
+                values=(match.get("match_type", ""), faces, heels, belts, storyline_label),
+            )
 
 class MatchPanel(ttk.Frame):
     def __init__(self, master, datastore: DataStore, on_timeline_update=None):
@@ -901,7 +1134,7 @@ class Application(tk.Tk):
         self._build_belt_tab(belt_tab)
         self.match_panel = MatchPanel(match_tab, self.datastore, on_timeline_update=self._refresh_booking)
         self.match_panel.pack(fill=tk.BOTH, expand=True)
-        self.booking_panel = BookingPanel(booking_tab, self.datastore)
+        self.booking_panel = BookingPanel(booking_tab, self.datastore, on_change=self._refresh_all)
         self.booking_panel.pack(fill=tk.BOTH, expand=True)
 
     def _build_wrestler_tab(self, parent):
