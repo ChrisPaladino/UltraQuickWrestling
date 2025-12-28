@@ -1,5 +1,7 @@
-import random
 import json
+import os
+import random
+import tempfile
 from engine.wrestler import Wrestler
 
 class Match:
@@ -72,7 +74,7 @@ class Match:
             # Permanent changes
             elif duration == "Permanently" and isinstance(change, int):
                 self.result_log.append(f"[DEBUG] Applying permanent change: {apply_to} {attr.title()} {change:+}")
-                self.apply_permanent_change(apply_to, attr.title(), change)
+                self.apply_permanent_change(apply_to, attr, change)
 
         # Step 3: Calculate match ratings (AFTER applying pre-match modifiers)
         base_face = getattr(self.face, 'overall', 0)
@@ -147,21 +149,53 @@ class Match:
 
         return "\n".join(self.result_log)
 
+    @staticmethod
+    def _normalize_attribute(attribute: str) -> str:
+        normalized = attribute.lower()
+        return Wrestler.ATTRIBUTE_SYNONYMS.get(normalized, normalized)
+
+    @staticmethod
+    def _safe_write_json(filepath: str, data: dict) -> None:
+        directory = os.path.dirname(filepath) or "."
+        fd, tmp_path = tempfile.mkstemp(prefix="wrestlers_", suffix=".json", dir=directory)
+        try:
+            with os.fdopen(fd, "w") as tmp_file:
+                json.dump(data, tmp_file, indent=2)
+                tmp_file.flush()
+                os.fsync(tmp_file.fileno())
+            os.replace(tmp_path, filepath)
+        except Exception:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            raise
+
     def apply_permanent_change(self, target_side, attribute, change):
         try:
             with open(self.wrestlers_file, "r") as f:
                 data = json.load(f)
 
-            target_name = self.face.name if target_side == "FACE" else self.heel.name
-            for w in data:
-                if w["name"] == target_name:
-                    old_val = w.get(attribute, 0)
-                    w[attribute] = old_val + change
-                    self.result_log.append(f"[DEBUG] {target_name}'s {attribute} permanently changed from {old_val} to {w[attribute]}")
-                    break
+            wrestlers = data.get("wrestlers")
+            if wrestlers is None:
+                raise ValueError("Expected 'wrestlers' key in data file.")
 
-            with open(self.wrestlers_file, "w") as f:
-                json.dump(data, f, indent=2)
+            target_name = self.face.name if target_side == "FACE" else self.heel.name
+            attribute_key = self._normalize_attribute(attribute)
+            for wrestler in wrestlers:
+                if wrestler.get("name") == target_name:
+                    if attribute_key == "overall":
+                        old_val = wrestler.get("overall", 0)
+                        wrestler["overall"] = old_val + change
+                    else:
+                        wrestler.setdefault("attributes", {})
+                        old_val = wrestler["attributes"].get(attribute_key, 0)
+                        wrestler["attributes"][attribute_key] = old_val + change
+                    self.result_log.append(
+                        f"[DEBUG] {target_name}'s {attribute_key} permanently changed from {old_val} to {old_val + change}"
+                    )
+                    break
+            else:
+                raise ValueError(f"Wrestler named {target_name} not found.")
+
+            self._safe_write_json(self.wrestlers_file, data)
         except Exception as e:
             self.result_log.append(f"[ERROR] Failed to update permanent change: {e}")
-
