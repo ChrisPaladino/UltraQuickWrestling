@@ -1,7 +1,9 @@
 class Wrestler:
-    ATTRIBUTE_SYNONYMS = {
+    ATTRIBUTE_ALIASES = {
         "tech": "technical",
+        "technical": "technical",
         "brawl": "brawling",
+        "brawling": "brawling",
     }
 
     DEFAULT_ATTRIBUTES = {
@@ -20,29 +22,62 @@ class Wrestler:
         "tag": 0,
     }
 
+    NON_ATTRIBUTE_KEYS = {
+        "name",
+        "finisher",
+        "persona",
+        "overall",
+        "attributes",
+        "image",
+        "record",
+        "injured",
+        "injury_duration",
+    }
+
     def __init__(self, data: dict):
         self.name = data.get("name")
         self.finisher = data.get("finisher")
         self.persona = data.get("persona")  # "Face" or "Heel"
         self.overall = data.get("overall", 0)
 
-        known_keys = {"name", "finisher", "persona", "overall", "attributes"}
-        raw_attributes = dict(data.get("attributes", {}))
-        for key, value in data.items():
-            if key not in known_keys:
-                raw_attributes.setdefault(key, value)
-        normalized_attributes = {}
-        for key, value in raw_attributes.items():
-            normalized_key = self.ATTRIBUTE_SYNONYMS.get(key.lower(), key.lower())
-            normalized_attributes[normalized_key] = value
+        self.attributes = {}
+        # Flatten nested attributes first, then overlay any top-level values
+        self.attributes.update(self._normalize_attribute_dict(data.get("attributes", {})))
+        self.attributes.update(self._normalize_attribute_dict(data))
 
-        self.attributes = {**self.DEFAULT_ATTRIBUTES, **normalized_attributes}
+        for key, val in self.DEFAULT_ATTRIBUTES.items():
+            self.attributes.setdefault(key, val)
+            setattr(self, key, self.attributes[key])
 
-        # Expose attribute modifiers as direct attributes for convenience
-        for key, value in self.attributes.items():
-            setattr(self, key, value)
+    @classmethod
+    def _normalize_attribute_key(cls, key: str):
+        if not isinstance(key, str):
+            return None
+        normalized = cls.ATTRIBUTE_ALIASES.get(key.lower(), key.lower())
+        if normalized in cls.DEFAULT_ATTRIBUTES:
+            return normalized
+        return None
+
+    @classmethod
+    def _normalize_attribute_dict(cls, source: dict) -> dict:
+        normalized = {}
+        for key, value in source.items():
+            if key.lower() in cls.NON_ATTRIBUTE_KEYS:
+                continue
+            normalized_key = cls._normalize_attribute_key(key)
+            if normalized_key:
+                normalized[normalized_key] = value
+        return normalized
+
+    def get_attribute_value(self, attribute: str) -> int:
+        if not attribute:
+            return 0
+        normalized = self._normalize_attribute_key(attribute)
+        if not normalized:
+            return 0
+        return self.attributes.get(normalized, self.DEFAULT_ATTRIBUTES.get(normalized, 0))
 
     def get_match_rating(self, modifier: str = "normal") -> int:
         if modifier.lower() == "normal":
             return self.overall
-        return self.overall + self.attributes.get(modifier.lower(), 0)
+        return self.overall + self.get_attribute_value(modifier)
