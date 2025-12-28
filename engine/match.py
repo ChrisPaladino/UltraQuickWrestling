@@ -22,7 +22,7 @@ class Match:
         self.result_log.append(f"[DEBUG] Rolled d10 for match modifier: {modifier_roll}")
         modifier_entry = next((m for m in self.game_data["match_modifiers"] if m["roll"] == modifier_roll), None)
         modifier_raw = modifier_entry["modifier"] if modifier_entry else "normal"
-        modifier = Wrestler._normalize_attribute_name(modifier_raw)
+        modifier = Wrestler.normalize_attribute_name(modifier_raw) or "normal"
         display_modifier = modifier.replace("_", " ").title()
         self.result_log.append(f"Match Modifier Rolled: {display_modifier}")
 
@@ -60,7 +60,7 @@ class Match:
         effect = pre_event.get("effect")
         match_adjustment = {"Face": 0, "Heel": 0}
         if effect:
-            attr = Wrestler._normalize_attribute_name(effect.get("attribute", ""))
+            attr = Wrestler.normalize_attribute_name(effect.get("attribute", ""))
             change = effect.get("change")
             duration = effect.get("duration", "")
             apply_to = effect.get("target")
@@ -154,7 +154,7 @@ class Match:
     @staticmethod
     def _normalize_attribute(attribute: str) -> str:
         normalized = attribute.lower()
-        return Wrestler.ATTRIBUTE_SYNONYMS.get(normalized, normalized)
+        return Wrestler.normalize_attribute_name(normalized) or normalized
 
     @staticmethod
     def _safe_write_json(filepath: str, data: dict) -> None:
