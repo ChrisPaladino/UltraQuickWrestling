@@ -19,8 +19,10 @@ class Match:
         modifier_roll = random.randint(0, 9)
         self.result_log.append(f"[DEBUG] Rolled d10 for match modifier: {modifier_roll}")
         modifier_entry = next((m for m in self.game_data["match_modifiers"] if m["roll"] == modifier_roll), None)
-        modifier = modifier_entry["modifier"].lower() if modifier_entry else "normal"
-        self.result_log.append(f"Match Modifier Rolled: {modifier.title()}")
+        modifier_raw = modifier_entry["modifier"] if modifier_entry else "normal"
+        modifier = Wrestler._normalize_attribute_name(modifier_raw)
+        display_modifier = modifier.replace("_", " ").title()
+        self.result_log.append(f"Match Modifier Rolled: {display_modifier}")
 
         # Step 2: Pre-Match Chart
         pre_chart_roll = random.randint(0, 9)
@@ -56,7 +58,7 @@ class Match:
         effect = pre_event.get("effect")
         match_adjustment = {"Face": 0, "Heel": 0}
         if effect:
-            attr = effect.get("attribute", "").lower()
+            attr = Wrestler._normalize_attribute_name(effect.get("attribute", ""))
             change = effect.get("change")
             duration = effect.get("duration", "")
             apply_to = effect.get("target")
@@ -77,15 +79,15 @@ class Match:
         # Step 3: Calculate match ratings (AFTER applying pre-match modifiers)
         base_face = getattr(self.face, 'overall', 0)
         base_heel = getattr(self.heel, 'overall', 0)
-        mod_face = getattr(self.face, modifier, 0)
-        mod_heel = getattr(self.heel, modifier, 0)
+        mod_face = self.face.get_attribute_bonus(modifier)
+        mod_heel = self.heel.get_attribute_bonus(modifier)
         adj_face = match_adjustment["Face"]
         adj_heel = match_adjustment["Heel"]
-        rating_face = base_face + mod_face + adj_face
-        rating_heel = base_heel + mod_heel + adj_heel
+        rating_face = self.face.get_match_rating(modifier) + adj_face
+        rating_heel = self.heel.get_match_rating(modifier) + adj_heel
 
-        self.result_log.append(f"[DEBUG] Match rating formula: {self.face.name} = Overall + {modifier.title()} + Adjustment = {base_face} + {mod_face} + {adj_face} = {rating_face}")
-        self.result_log.append(f"[DEBUG] Match rating formula: {self.heel.name} = Overall + {modifier.title()} + Adjustment = {base_heel} + {mod_heel} + {adj_heel} = {rating_heel}")
+        self.result_log.append(f"[DEBUG] Match rating formula: {self.face.name} = Overall + {display_modifier} + Adjustment = {base_face} + {mod_face} + {adj_face} = {rating_face}")
+        self.result_log.append(f"[DEBUG] Match rating formula: {self.heel.name} = Overall + {display_modifier} + Adjustment = {base_heel} + {mod_heel} + {adj_heel} = {rating_heel}")
         self.result_log.append(f"[DEBUG] Adjusted match ratings: {self.face.name}={rating_face}, {self.heel.name}={rating_heel}")
 
         # Step 4: Determine Winner
@@ -164,4 +166,3 @@ class Match:
                 json.dump(data, f, indent=2)
         except Exception as e:
             self.result_log.append(f"[ERROR] Failed to update permanent change: {e}")
-

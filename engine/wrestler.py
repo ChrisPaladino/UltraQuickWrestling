@@ -1,4 +1,23 @@
 class Wrestler:
+    @staticmethod
+    def _normalize_attribute_name(name: str) -> str:
+        if not isinstance(name, str):
+            return ""
+
+        normalized = name.strip().lower().replace(" ", "_").replace("-", "_")
+        aliases = {
+            "tech": "technical",
+            "technical": "technical",
+            "brawl": "brawling",
+            "brawling": "brawling",
+            "foreign_object": "object",
+            "object": "object",
+            "overall": "overall",
+            "normal": "normal",
+        }
+
+        return aliases.get(normalized, normalized)
+
     def __init__(self, data: dict):
         self.name = data.get("name")
         self.finisher = data.get("finisher")
@@ -6,10 +25,21 @@ class Wrestler:
         self.overall = data.get("overall", 0)
 
         # Normalize all attribute keys to lowercase
-        self.attributes = {
-            k.lower(): v for k, v in data.items()
-            if k.lower() not in {"name", "finisher", "persona", "overall"}
-        }
+        self.attributes = {}
+
+        nested_attributes = data.get("attributes", {})
+        if isinstance(nested_attributes, dict):
+            for key, value in nested_attributes.items():
+                normalized = self._normalize_attribute_name(key)
+                self.attributes[normalized] = value
+
+        for key, value in data.items():
+            normalized = self._normalize_attribute_name(key)
+            if normalized in {"name", "finisher", "persona", "overall", "attributes"}:
+                continue
+            if isinstance(value, dict):
+                continue
+            self.attributes[normalized] = value
 
         # Explicitly set expected attributes (optional fallback values)
         defaults = {
@@ -20,6 +50,10 @@ class Wrestler:
             self.attributes.setdefault(key, val)
 
     def get_match_rating(self, modifier: str = "normal") -> int:
-        if modifier.lower() == "normal":
-            return self.overall
-        return self.overall + self.attributes.get(modifier.lower(), 0)
+        return self.overall + self.get_attribute_bonus(modifier)
+
+    def get_attribute_bonus(self, modifier: str) -> int:
+        normalized = self._normalize_attribute_name(modifier)
+        if normalized == "normal":
+            return 0
+        return self.attributes.get(normalized, 0)
