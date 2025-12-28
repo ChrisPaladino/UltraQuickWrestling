@@ -161,7 +161,7 @@ class Match:
 
         if self.advanced_rules:
             winner_name = winner.name
-            self.advanced_rules.apply_post_match(self.face.name, self.heel.name, winner_name, self.match_type, self.result_log)
+            self.advanced_rules.apply_post_match(self.face.name, self.heel.name, winner_name, self.match_type, post_result_entry, self.result_log)
 
         return "\n".join(self.result_log)
 

@@ -116,8 +116,8 @@ class AdvancedRulesEngine:
 
         return adjustments
 
-    def apply_post_match(self, face_name: str, heel_name: str, winner_name: str, match_type: str, log: list):
-        """Apply post-match hooks (injuries, titles, rivalries, heat, season ticking)."""
+    def apply_post_match(self, face_name: str, heel_name: str, winner_name: str, match_type: str, post_result_entry: Optional[dict], log: list):
+        """Apply post-match hooks (injuries, titles, rivalries, heat, persistent modifiers, season ticking)."""
         if not self.config.enabled:
             return
 
@@ -134,6 +134,8 @@ class AdvancedRulesEngine:
 
         if self.config.enable_heat:
             self._handle_heat(winner, loser, log)
+
+        self._handle_modifiers(winner, loser, match_type, post_result_entry, log)
 
         if self.config.enable_injuries:
             self._handle_injuries(winner, loser, log)
@@ -159,6 +161,41 @@ class AdvancedRulesEngine:
             winners_titles.append(title)
             log.append(f"[DEBUG] {winner.get('name')} claims inaugural {title}")
 
+        if self.config.enable_persistent_modifiers:
+            self._sync_title_modifiers(loser, log)
+            self._sync_title_modifiers(winner, log)
+
+    def _sync_title_modifiers(self, wrestler: Optional[dict], log: list):
+        """Keep title-based modifiers in sync with held titles."""
+        if not wrestler or not self.config.enable_persistent_modifiers:
+            return
+
+        titles = wrestler.get("titles", [])
+        applied_overall = wrestler.get("title_overall_bonus_applied", 0)
+        applied_heat = wrestler.get("title_heat_bonus_applied", 0)
+
+        expected_overall = 0
+        expected_heat = 0
+
+        if self.config.enable_title_overall_bonus:
+            expected_overall = len(titles) * self.config.title_overall_bonus
+        if self.config.heat_change_on_titles:
+            expected_heat = len(titles) * self.config.base_heat_delta
+
+        if applied_overall != expected_overall:
+            wrestler["overall_modifier"] = wrestler.get("overall_modifier", 0) + (expected_overall - applied_overall)
+            wrestler["title_overall_bonus_applied"] = expected_overall
+            log.append(
+                f"[DEBUG] Title overall bonus synced for {wrestler.get('name')}: {applied_overall:+} -> {expected_overall:+}"
+            )
+
+        if applied_heat != expected_heat:
+            wrestler["heat_modifier"] = wrestler.get("heat_modifier", 0) + (expected_heat - applied_heat)
+            wrestler["title_heat_bonus_applied"] = expected_heat
+            log.append(
+                f"[DEBUG] Title heat bonus synced for {wrestler.get('name')}: {applied_heat:+} -> {expected_heat:+}"
+            )
+
     def _handle_rivalries(self, face: Optional[dict], heel: Optional[dict], winner: Optional[dict], loser: Optional[dict], log: list):
         if not face or not heel or not winner or not loser:
             return
@@ -181,6 +218,26 @@ class AdvancedRulesEngine:
         if loser:
             loser["heat_modifier"] = loser.get("heat_modifier", 0) - heat_delta
             log.append(f"[DEBUG] {loser.get('name')} loses heat modifier {-heat_delta:+}")
+
+    def _handle_modifiers(self, winner: Optional[dict], loser: Optional[dict], match_type: str, post_result_entry: Optional[dict], log: list):
+        if not self.config.enable_persistent_modifiers:
+            return
+
+        result_text = (post_result_entry or {}).get("result", "") or ""
+        clean_finish = "clean" in result_text.lower()
+
+        if clean_finish and winner and self.config.clean_win_bonus:
+            winner["overall_modifier"] = winner.get("overall_modifier", 0) + self.config.clean_win_bonus
+            log.append(f"[DEBUG] Clean finish: {winner.get('name')} overall modifier {self.config.clean_win_bonus:+}")
+
+        if clean_finish and loser and self.config.clean_loss_penalty:
+            penalty = -abs(self.config.clean_loss_penalty)
+            loser["overall_modifier"] = loser.get("overall_modifier", 0) + penalty
+            log.append(f"[DEBUG] Clean finish: {loser.get('name')} overall modifier {penalty:+}")
+
+        # Keep title-based modifiers aligned with current champions even when no swap happens.
+        self._sync_title_modifiers(winner, log)
+        self._sync_title_modifiers(loser, log)
 
     def _handle_injuries(self, winner: Optional[dict], loser: Optional[dict], log: list):
         rng = self.config.rng
