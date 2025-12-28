@@ -45,8 +45,21 @@ class TagTeam:
 
 class Match:
     def __init__(self, wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles, wrestlers_file="data/wrestlers.json", advanced_rules_config=None):
-        self.face = Wrestler(wrestler_a_data if assigned_roles['Face'] == wrestler_a_data['name'] else wrestler_b_data)
-        self.heel = Wrestler(wrestler_b_data if self.face.name == wrestler_a_data['name'] else wrestler_a_data)
+        face_names = assigned_roles.get("Face") if isinstance(assigned_roles, dict) else None
+        face_names_normalized = set()
+        if isinstance(face_names, (list, tuple, set)):
+            face_names_normalized = {name.lower() for name in face_names if isinstance(name, str)}
+        elif isinstance(face_names, str):
+            face_names_normalized = {face_names.lower()}
+
+        wrestler_a_face = wrestler_a_data.get("name", "").lower() in face_names_normalized
+        wrestler_b_face = wrestler_b_data.get("name", "").lower() in face_names_normalized
+
+        if wrestler_a_face == wrestler_b_face:
+            raise ValueError("Assigned roles must unambiguously identify a Face side.")
+
+        self.face = Wrestler(wrestler_a_data if wrestler_a_face else wrestler_b_data)
+        self.heel = Wrestler(wrestler_b_data if wrestler_a_face else wrestler_a_data)
         self._init_common(match_type, game_data, wrestlers_file, advanced_rules_config)
 
     def _init_common(self, match_type, game_data, wrestlers_file="data/wrestlers.json", advanced_rules_config=None):
