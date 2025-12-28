@@ -1,5 +1,81 @@
 {
-  "events": [],
+  "events": [
+    {
+      "id": "event-2287d4b1",
+      "name": "Women's Tournament Round 1",
+      "date": "2025-12-28",
+      "venue": "UQW Arena",
+      "notes": "",
+      "matches": [
+        {
+          "id": "match-e305eb00",
+          "match_type": "TV Taping",
+          "face_side": [
+            "Riot Rayne"
+          ],
+          "heel_side": [
+            "Harlequin Havoc"
+          ],
+          "belts": [],
+          "storyline_id": null
+        },
+        {
+          "id": "match-de821d54",
+          "match_type": "TV Taping",
+          "face_side": [
+            "Alyssa Warden"
+          ],
+          "heel_side": [
+            "Viper Rose"
+          ],
+          "belts": [],
+          "storyline_id": null
+        },
+        {
+          "id": "match-c56aafcb",
+          "match_type": "TV Taping",
+          "face_side": [
+            "Priscilla Steele"
+          ],
+          "heel_side": [
+            "Shadow Striker"
+          ],
+          "belts": [],
+          "storyline_id": null
+        },
+        {
+          "id": "match-bc9f6d53",
+          "match_type": "TV Taping",
+          "face_side": [
+            "Harlequin Havoc"
+          ],
+          "heel_side": [
+            "Riot Rayne"
+          ],
+          "belts": [],
+          "storyline_id": null
+        }
+      ]
+    }
+  ],
   "storylines": [],
-  "timeline": []
+  "timeline": [
+    {
+      "event_id": "event-2287d4b1",
+      "match_id": "match-bc9f6d53",
+      "storyline_id": null,
+      "match_type": "TV Taping",
+      "winner": [
+        "Riot Rayne"
+      ],
+      "loser": [
+        "Harlequin Havoc"
+      ],
+      "belts": [],
+      "post_result": "Pin fall via Illegal Tactics",
+      "log": "[DEBUG] Starting match simulation\n[DEBUG] Rolled d10 for match modifier: 6\nMatch Modifier Rolled: Normal\n[DEBUG] Rolled d10 for pre-match chart: 1\n[DEBUG] Pre-match target side: Heel, Target Wrestler: Riot Rayne\n[DEBUG] Rolled d100 for pre-match event: 79\n[DEBUG] Selected pre-match event: {'roll': '79-80', 'event': 'Loaded Elbow Pad Connects', 'effect': {'target': 'HEEL', 'attribute': 'Overall', 'change': 50, 'duration': 'This match only'}}\nPre-Match Event (Heel): Loaded Elbow Pad Connects\n[DEBUG] Match rating formula: Harlequin Havoc = Overall + Normal + Adjustment = 1240 + 0 + 0 = 1240\n[DEBUG] Match rating formula: Riot Rayne = Overall + Normal + Adjustment = 1300 + 0 + 50 = 1350\n[DEBUG] Adjusted match ratings: Harlequin Havoc=1240, Riot Rayne=1350\n[DEBUG] Point difference: 110\nRoll: 46 \u2192 Winner: Riot Rayne (Heel)\n[DEBUG] Rolled d100 for post-match result: 44\nPost-Match Result: Pin fall via Illegal Tactics",
+      "notes": "",
+      "occurred_on": "2025-12-28"
+    }
+  ]
 }
