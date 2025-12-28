@@ -46,6 +46,20 @@ class AdvancedRulesTests(unittest.TestCase):
             advanced_rules_config=advanced_config,
         )
 
+    def _simulate_with_rolls(self, face, heel, roster_path, advanced_config, randint_side_effect, random_value=None):
+        match = self._build_match(face, heel, roster_path, advanced_config)
+        randint_patch = patch("random.randint", side_effect=randint_side_effect)
+        if random_value is None:
+            with randint_patch:
+                log = match.simulate()
+        else:
+            with randint_patch, patch("random.random", return_value=random_value):
+                log = match.simulate()
+
+        with open(roster_path) as f:
+            updated = json.load(f)
+        return log, updated
+
     def test_injury_penalty_and_recovery(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             face = {
@@ -296,6 +310,117 @@ class AdvancedRulesTests(unittest.TestCase):
             self.assertEqual(updated_face.get("overall_modifier", 0), 5)
             self.assertEqual(updated_face.get("title_heat_bonus_applied", 0), 0)
             self.assertEqual(updated_face.get("heat_modifier", 0), 5)
+
+    def test_clean_finish_updates_persistent_modifiers(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            face = {
+                "name": "Steady Face",
+                "persona": "Face",
+                "overall": 1050,
+                "overall_modifier": 1,
+                "titles": [],
+                "heat_modifier": 1,
+            }
+            heel = {
+                "name": "Risky Heel",
+                "persona": "Heel",
+                "overall": 950,
+                "overall_modifier": -1,
+                "titles": [],
+                "heat_modifier": -1,
+            }
+            config = {
+                "enabled": True,
+                "clean_win_bonus": 5,
+                "clean_loss_penalty": 2,
+                "base_heat_delta": 3,
+                "enable_heat": True,
+                "enable_persistent_modifiers": True,
+                "injury_chance": 0,
+                "enable_seasons": False,
+            }
+            roster_path = self._build_roster([face, heel], tmpdir)
+
+            log, updated = self._simulate_with_rolls(face, heel, roster_path, config, [1, 0, 1, 50, 1])
+
+            self.assertIn("Clean finish", log)
+            updated_face = next(w for w in updated["wrestlers"] if w["name"] == "Steady Face")
+            updated_heel = next(w for w in updated["wrestlers"] if w["name"] == "Risky Heel")
+
+            self.assertEqual(updated_face.get("overall_modifier", 0), 6)  # 1 + clean win bonus 5
+            self.assertEqual(updated_heel.get("overall_modifier", 0), -3)  # -1 - clean loss penalty 2
+            self.assertEqual(updated_face.get("heat_modifier", 0), 4)  # 1 + base_heat_delta 3
+            self.assertEqual(updated_heel.get("heat_modifier", 0), -4)  # -1 - base_heat_delta 3
+
+    def test_title_modifiers_sync_on_swaps(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            challenger = {
+                "name": "Challenger",
+                "persona": "Face",
+                "overall": 1150,
+                "overall_modifier": 0,
+                "titles": [],
+                "heat_modifier": 0,
+            }
+            champion = {
+                "name": "Champion",
+                "persona": "Heel",
+                "overall": 1000,
+                "overall_modifier": 0,
+                "titles": ["World"],
+                "heat_modifier": 0,
+            }
+            config = {
+                "enabled": True,
+                "title_on_the_line": "World",
+                "title_overall_bonus": 4,
+                "base_heat_delta": 2,
+                "enable_heat": True,
+                "enable_title_overall_bonus": True,
+                "enable_persistent_modifiers": True,
+                "injury_chance": 0,
+                "enable_seasons": False,
+            }
+            roster_path = self._build_roster([challenger, champion], tmpdir)
+
+            first_log, updated_after_first = self._simulate_with_rolls(
+                challenger, champion, roster_path, config, [1, 0, 1, 50, 1]
+            )
+
+            updated_challenger = next(w for w in updated_after_first["wrestlers"] if w["name"] == "Challenger")
+            updated_champion = next(w for w in updated_after_first["wrestlers"] if w["name"] == "Champion")
+
+            self.assertIn("wins the World", first_log)
+            self.assertIn("World", updated_challenger.get("titles", []))
+            self.assertNotIn("World", updated_champion.get("titles", []))
+            self.assertEqual(updated_challenger.get("overall_modifier", 0), 4)
+            self.assertEqual(updated_challenger.get("title_overall_bonus_applied", 0), 4)
+            self.assertEqual(updated_challenger.get("heat_modifier", 0), 4)  # heat + title heat bonus
+            self.assertEqual(updated_challenger.get("title_heat_bonus_applied", 0), 2)
+
+            updated_champion["overall"] = 1300
+            roster_path = self._build_roster([updated_challenger, updated_champion], tmpdir)
+
+            second_log, updated_after_second = self._simulate_with_rolls(
+                updated_challenger, updated_champion, roster_path, config, [1, 0, 1, 50, 1]
+            )
+
+            final_challenger = next(w for w in updated_after_second["wrestlers"] if w["name"] == "Challenger")
+            final_champion = next(w for w in updated_after_second["wrestlers"] if w["name"] == "Champion")
+
+            self.assertIn("wins the World", second_log)
+            self.assertNotIn("World", final_challenger.get("titles", []))
+            self.assertIn("World", final_champion.get("titles", []))
+
+            self.assertEqual(final_challenger.get("overall_modifier", 0), 0)
+            self.assertEqual(final_challenger.get("title_overall_bonus_applied", 0), 0)
+            self.assertEqual(final_challenger.get("heat_modifier", 0), 0)
+            self.assertEqual(final_challenger.get("title_heat_bonus_applied", 0), 0)
+
+            self.assertEqual(final_champion.get("overall_modifier", 0), 4)
+            self.assertEqual(final_champion.get("title_overall_bonus_applied", 0), 4)
+            self.assertEqual(final_champion.get("heat_modifier", 0), 2)  # heat delta + title heat bonus
+            self.assertEqual(final_champion.get("title_heat_bonus_applied", 0), 2)
 
 
 if __name__ == "__main__":
