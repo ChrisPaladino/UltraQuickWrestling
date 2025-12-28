@@ -176,7 +176,7 @@ class Match:
                 raise ValueError("Expected 'wrestlers' key in data file.")
 
             target_name = self.face.name if target_side == "FACE" else self.heel.name
-            attribute_key = Wrestler._normalize_attribute_name(attribute)
+            attribute_key = Wrestler.normalize_attribute_name(attribute)
             for wrestler in wrestlers:
                 if wrestler.get("name") == target_name:
                     if attribute_key == "overall":
