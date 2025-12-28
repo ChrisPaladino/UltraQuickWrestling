@@ -12,8 +12,10 @@ ultra_quick_wrestling/
 │   ├── __init__.py
 │   ├── match.py         # Core match simulation
 │   ├── wrestler.py      # Wrestler model + rating logic
-│   └── data_loader.py   # Reads wrestlers.json and game_data.json
+│   └── repository.py    # Data access layer with atomic JSON writes
 ├── data/
+│   ├── belts.json
+│   ├── events.json
 │   ├── wrestlers.json
 │   └── game_data.json
 ├── rules/

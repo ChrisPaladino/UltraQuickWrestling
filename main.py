@@ -2,7 +2,7 @@ import argparse
 import json
 from typing import List, Optional, Sequence, Tuple
 
-from engine import data_loader
+from engine import repository
 from engine.match import create_match
 
 def choose_wrestler(wrestlers, role):
@@ -128,7 +128,7 @@ def _build_match_from_args(args, wrestlers: Sequence[dict], game_data: dict):
 
 def _build_argument_parser():
     parser = argparse.ArgumentParser(
-        description="Simulate Ultra Quick Wrestling matches via CLI or interactive prompts.",
+        description="Simulate Ultra Quick Wrestling matches via CLI or interactive prompts, or manage rosters and belts.",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument("--team-a", help="Comma-separated list or JSON array of wrestler names for Team A.")
@@ -136,14 +136,96 @@ def _build_argument_parser():
     parser.add_argument("--tag", action="store_true", help="Enable tag match mode (teams can have multiple members).")
     parser.add_argument("--face-team", choices=["A", "B"], help="Explicitly choose which team is the Face side.")
     parser.add_argument("--match-type", help="Match type name (defaults to the first available type).")
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    wrestler_parser = subparsers.add_parser("wrestler", help="Create, update, or delete wrestlers.")
+    wrestler_action = wrestler_parser.add_mutually_exclusive_group(required=True)
+    wrestler_action.add_argument("--add", action="store_true", help="Create a new wrestler.")
+    wrestler_action.add_argument("--update", action="store_true", help="Update an existing wrestler.")
+    wrestler_action.add_argument("--delete", action="store_true", help="Delete a wrestler.")
+    wrestler_parser.add_argument("--name", required=True, help="Wrestler name.")
+    wrestler_parser.add_argument("--persona", choices=["Face", "Heel"], help="Persona (Face or Heel).")
+    wrestler_parser.add_argument("--finisher", help="Finisher name.")
+    wrestler_parser.add_argument("--overall", type=int, help="Overall rating (integer).")
+
+    belt_parser = subparsers.add_parser("belt", help="Assign title belts.")
+    belt_parser.add_argument("--assign", action="store_true", help="Assign the belt to the holder.")
+    belt_parser.add_argument("--belt", required=True, help="Belt name.")
+    belt_parser.add_argument("--holder", required=True, help="Wrestler name to hold the belt.")
+
+    event_parser = subparsers.add_parser("event", help="Schedule an event.")
+    event_parser.add_argument("--name", required=True, help="Event name.")
+    event_parser.add_argument("--date", help="Optional date string.")
+    event_parser.add_argument("--location", help="Optional location description.")
+    event_parser.add_argument("--details", help="Additional JSON payload to merge into the event.")
     return parser
 
 def main():
     parser = _build_argument_parser()
     args = parser.parse_args()
 
-    wrestlers = data_loader.load_wrestlers()
-    game_data = data_loader.load_game_data()
+    if args.command == "wrestler":
+        try:
+            if args.add:
+                payload = {
+                    "name": args.name,
+                    "persona": args.persona or "Face",
+                    "finisher": args.finisher or "",
+                    "overall": args.overall if args.overall is not None else 1000,
+                }
+                repository.create_wrestler(payload)
+                print(f"Created wrestler '{args.name}'.")
+            elif args.update:
+                updates = {}
+                if args.persona:
+                    updates["persona"] = args.persona
+                if args.finisher is not None:
+                    updates["finisher"] = args.finisher
+                if args.overall is not None:
+                    updates["overall"] = args.overall
+                repository.update_wrestler(args.name, updates)
+                print(f"Updated wrestler '{args.name}'.")
+            elif args.delete:
+                repository.delete_wrestler(args.name)
+                print(f"Deleted wrestler '{args.name}'.")
+        except ValueError as exc:
+            parser.error(str(exc))
+        return
+
+    if args.command == "belt":
+        if not args.assign:
+            parser.error("Currently only belt assignment is supported (use --assign).")
+        try:
+            repository.assign_belt(args.belt, args.holder)
+            print(f"Assigned '{args.belt}' to '{args.holder}'.")
+        except ValueError as exc:
+            parser.error(str(exc))
+        return
+
+    if args.command == "event":
+        event = {"name": args.name}
+        if args.date:
+            event["date"] = args.date
+        if args.location:
+            event["location"] = args.location
+        if args.details:
+            try:
+                parsed_details = json.loads(args.details)
+                if isinstance(parsed_details, dict):
+                    event.update(parsed_details)
+            except json.JSONDecodeError as exc:
+                parser.error(f"Invalid JSON for --details: {exc}")
+
+        try:
+            repository.schedule_event(event)
+            print(f"Scheduled event '{args.name}'.")
+        except ValueError as exc:
+            parser.error(str(exc))
+        return
+
+    wrestlers = repository.load_wrestlers()
+    game_data = repository.load_game_data()
 
     if args.team_a or args.team_b:
         if not args.team_a or not args.team_b:
