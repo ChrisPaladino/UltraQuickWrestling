@@ -14,6 +14,12 @@ class AdvancedRulesConfig:
     enable_rivalries: bool = True
     enable_heat: bool = True
     enable_seasons: bool = True
+    enable_persistent_modifiers: bool = True
+    enable_title_overall_bonus: bool = True
+    clean_win_bonus: int = 0
+    clean_loss_penalty: int = 0
+    title_overall_bonus: int = 0
+    heat_change_on_titles: bool = True
     title_on_the_line: Optional[str] = None
     injury_chance: float = 0.15
     injury_penalty: int = -100
@@ -71,6 +77,12 @@ class AdvancedRulesEngine:
         roster = self.load_roster()
         for wrestler in roster.get("wrestlers", []):
             if wrestler.get("name") == name:
+                if wrestler.get("overall_modifier") is None:
+                    wrestler["overall_modifier"] = 0
+                if wrestler.get("heat_modifier") is None:
+                    wrestler["heat_modifier"] = 0
+                if wrestler.get("titles") is None:
+                    wrestler["titles"] = []
                 return wrestler
         return None
 

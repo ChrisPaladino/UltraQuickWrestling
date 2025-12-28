@@ -30,7 +30,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     },
     {
       "name": "Diabolica",
@@ -62,7 +63,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     },
     {
       "name": "Brook Buchanan",
@@ -94,7 +96,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     },
     {
       "name": "Candy Crush",
@@ -126,7 +129,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     },
     {
       "name": "Cassie Crush",
@@ -158,7 +162,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     },
     {
       "name": "Crimson Queen",
@@ -190,7 +195,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     },
     {
       "name": "Gwendolyn Graves",
@@ -222,7 +228,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     },
     {
       "name": "Zuva",
@@ -254,7 +261,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     },
     {
       "name": "Viper Rose",
@@ -286,7 +294,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     },
     {
       "name": "Valkyrie",
@@ -318,7 +327,8 @@
       "injury_duration": 0,
       "titles": [],
       "rivalry_id": null,
-      "heat_modifier": 0
+      "heat_modifier": 0,
+      "overall_modifier": 0
     }
   ],
   "season": {

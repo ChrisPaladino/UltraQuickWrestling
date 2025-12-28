@@ -35,6 +35,7 @@ class Wrestler:
         "titles",
         "rivalry_id",
         "heat_modifier",
+        "overall_modifier",
     }
 
     def __init__(self, data: dict):
@@ -42,6 +43,7 @@ class Wrestler:
         self.finisher = data.get("finisher")
         self.persona = data.get("persona")  # "Face" or "Heel"
         self.overall = data.get("overall", 0)
+        self.overall_modifier = data.get("overall_modifier") or 0
 
         self.attributes = {}
         # Flatten nested attributes first, then overlay any top-level values
@@ -102,7 +104,11 @@ class Wrestler:
             return 0
         return self.attributes.get(normalized, self.DEFAULT_ATTRIBUTES.get(normalized, 0))
 
+    def get_base_overall(self) -> int:
+        return self.overall + self.overall_modifier
+
     def get_match_rating(self, modifier: str = "normal") -> int:
+        base_overall = self.get_base_overall()
         if modifier.lower() == "normal":
-            return self.overall
-        return self.overall + self.get_attribute_value(modifier)
+            return base_overall
+        return base_overall + self.get_attribute_value(modifier)
