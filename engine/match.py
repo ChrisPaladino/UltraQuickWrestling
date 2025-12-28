@@ -152,11 +152,6 @@ class Match:
         return "\n".join(self.result_log)
 
     @staticmethod
-    def _normalize_attribute(attribute: str) -> str:
-        normalized = attribute.lower()
-        return Wrestler.ATTRIBUTE_SYNONYMS.get(normalized, normalized)
-
-    @staticmethod
     def _safe_write_json(filepath: str, data: dict) -> None:
         directory = os.path.dirname(filepath) or "."
         fd, tmp_path = tempfile.mkstemp(prefix="wrestlers_", suffix=".json", dir=directory)
@@ -181,7 +176,7 @@ class Match:
                 raise ValueError("Expected 'wrestlers' key in data file.")
 
             target_name = self.face.name if target_side == "FACE" else self.heel.name
-            attribute_key = self._normalize_attribute(attribute)
+            attribute_key = Wrestler._normalize_attribute_name(attribute)
             for wrestler in wrestlers:
                 if wrestler.get("name") == target_name:
                     if attribute_key == "overall":
