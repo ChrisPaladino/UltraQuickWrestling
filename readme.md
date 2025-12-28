@@ -1,13 +1,13 @@
 # Ultra Quick Wrestling - Python Edition
 
-A Python GUI-based simulation of **Ultra Quick Wrestling**, the fast-paced 1991-themed pro wrestling game originally published by Downey Games. This version recreates the action using real wrestler stats, dynamic match types, and storytelling logic pulled straight from the rulebook.
+A Python console simulation of **Ultra Quick Wrestling**, the fast-paced 1991-themed pro wrestling game originally published by Downey Games. This version recreates the action using real wrestler stats, dynamic match types, and storytelling logic pulled straight from the rulebook.
 
 ---
 
 ## 📦 Project Structure
 
 ultra_quick_wrestling/
-├── main.py              # Entry point for console app
+├── main.py              # Entry point for the console app
 ├── engine/
 │   ├── __init__.py
 │   ├── match.py         # Core match simulation
@@ -26,17 +26,22 @@ ultra_quick_wrestling/
 ### Requirements
 
 - Python 3.x
-- Standard Library modules only: `tkinter`, `json`, `os`, `random`
+- Standard Library modules only: `json`, `os`, `random`
 
-### How to Run
+### How to Run (Console)
 
-python match_simulator.py
+From the repository root, run the console driver:
 
-The GUI will launch with options to:
+```bash
+python main.py
+```
 
-- Select two wrestlers from the 1991 roster
-- Pick a match type (TV Taping, PPV, Cage, No DQ, Specialty)
-- Simulate and view the match result with storyline flavor and modifiers
+You'll be prompted to:
+
+1. Select two wrestlers from the 1991 roster (by number).
+2. Resolve any duplicate personas by designating who works Face and who works Heel.
+3. Choose a match type (TV Taping, PPV, Cage, No DQ, Specialty).
+4. View the narrated match log in your terminal.
 
 ---
 
@@ -45,9 +50,12 @@ The GUI will launch with options to:
 This project implements the official UQW rules including:
 
 - Wrestler attributes like **Savvy**, **Cheating**, **Speed**, and **Heat**
-- Match modifiers and pre-match storylines
-- Random match outcomes based on overall ratings + dice rolls
-- Possibility of unusual or storyline-driven results (like run-ins, distractions, surprise wins)
+- A rule-driven flow:
+  - **Match modifier roll (d10):** adjusts which attribute feeds the core rating for this bout.
+  - **Pre-match chart (d10 → d100):** selects which side is targeted, applies storyline events, and can temporarily or permanently tweak ratings before the bell.
+  - **Result chart (d100):** compares the adjusted Face/Heel ratings and rolls against the difference bands to determine the winner, then consults the appropriate match-type result table.
+- Post-match outcomes pulled from the match-type win chart, with optional unusual results when triggered.
+- Possibility of unusual or storyline-driven results (like run-ins, distractions, surprise wins).
 
 Advanced and supplemental rules are partially implemented or planned.
 
@@ -59,7 +67,7 @@ Advanced and supplemental rules are partially implemented or planned.
 - Tag Team and Battle Royale support
 - Heat rating persistence
 - Toggle between core and advanced rule modes
-- More dynamic, themed GUI (1980s/1990s wrestling vibe)
+- Planned GUI exploration (design TBD; not yet shipped)
 
 ---
 
