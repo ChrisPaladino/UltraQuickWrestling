@@ -71,6 +71,16 @@ class Wrestler:
         return normalized or ""
 
     @classmethod
+    def normalize_attribute_name(cls, attribute: str) -> str:
+        """
+        Public wrapper for attribute normalization.
+
+        Preserves the legacy name used throughout the engine while delegating to
+        the internal normalization logic.
+        """
+        return cls._normalize_attribute_name(attribute)
+
+    @classmethod
     def _normalize_attribute_dict(cls, source: dict) -> dict:
         normalized = {}
         for key, value in source.items():
