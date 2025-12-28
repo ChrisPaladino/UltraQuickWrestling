@@ -1,5 +1,5 @@
 from engine import data_loader
-from engine.match import Match
+from engine.match import create_match
 
 def choose_wrestler(wrestlers, role):
     print(f"\nSelect {role.upper()}:")
@@ -49,7 +49,7 @@ def main():
 
     match_type = choose_match_type(game_data)
 
-    match = Match(wrestler1, wrestler2, match_type, game_data, assigned_roles)
+    match = create_match(wrestler1, wrestler2, match_type, game_data, assigned_roles)
     print("\n--- MATCH RESULT ---")
     print(match.simulate())
 

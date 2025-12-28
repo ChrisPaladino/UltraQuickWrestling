@@ -2,13 +2,54 @@ import json
 import os
 import random
 import tempfile
+from typing import Iterable, List, Sequence
+
 from engine.wrestler import Wrestler
 from engine.advanced_rules import AdvancedRulesEngine, AdvancedRulesConfig
+
+
+class TagTeam:
+    """Represents a team of wrestlers competing together."""
+
+    def __init__(self, wrestlers: Sequence[dict], side: str):
+        if not isinstance(wrestlers, Iterable) or isinstance(wrestlers, (str, bytes)):
+            raise ValueError("TagTeam expects an iterable of wrestler data")
+
+        self.members: List[Wrestler] = [Wrestler(w) for w in wrestlers]
+        if not self.members:
+            raise ValueError("TagTeam requires at least one member")
+
+        self.side = side
+        self.name = " & ".join([member.name for member in self.members])
+        self.persona = side
+        self.state = {
+            "momentum": sum((wrestler.get("heat_modifier") or 0) for wrestler in wrestlers),
+            "injured_members": [wrestler.get("name") for wrestler in wrestlers if wrestler.get("injured")],
+        }
+
+    @property
+    def member_names(self) -> List[str]:
+        return [member.name for member in self.members]
+
+    def get_base_overall(self) -> float:
+        total = sum(member.get_base_overall() for member in self.members)
+        return total / len(self.members)
+
+    def get_attribute_value(self, attribute: str) -> float:
+        total = sum(member.get_attribute_value(attribute) for member in self.members)
+        return total / len(self.members)
+
+    def get_tag_bonus(self) -> float:
+        return self.get_attribute_value("tag")
+
 
 class Match:
     def __init__(self, wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles, wrestlers_file="data/wrestlers.json", advanced_rules_config=None):
         self.face = Wrestler(wrestler_a_data if assigned_roles['Face'] == wrestler_a_data['name'] else wrestler_b_data)
         self.heel = Wrestler(wrestler_b_data if self.face.name == wrestler_a_data['name'] else wrestler_a_data)
+        self._init_common(match_type, game_data, wrestlers_file, advanced_rules_config)
+
+    def _init_common(self, match_type, game_data, wrestlers_file="data/wrestlers.json", advanced_rules_config=None):
         self.match_type = match_type
         self.game_data = game_data
         self.result_log = []
@@ -18,6 +59,34 @@ class Match:
         else:
             self.advanced_config = AdvancedRulesConfig.from_dict(advanced_rules_config or {})
         self.advanced_rules = AdvancedRulesEngine(self.wrestlers_file, self.advanced_config) if self.advanced_config.enabled else None
+
+    def _competitor_names(self, competitor) -> List[str]:
+        if hasattr(competitor, "member_names"):
+            return getattr(competitor, "member_names")
+        return [competitor.name]
+
+    def _rating_components(self, competitor, modifier: str, adjustment: float):
+        base = competitor.get_base_overall()
+        mod_value = 0 if modifier == "normal" else competitor.get_attribute_value(modifier)
+        return {"base": base, "tag": 0, "modifier": mod_value, "adjustment": adjustment}
+
+    def _format_rating_debug(self, competitor_name: str, display_modifier: str, components: dict) -> str:
+        base = components["base"]
+        mod = components["modifier"]
+        tag = components.get("tag", 0)
+        adj = components["adjustment"]
+        rating = base + mod + tag + adj
+
+        if tag:
+            return (
+                f"[DEBUG] Match rating formula: {competitor_name} = Overall + Tag + {display_modifier} + Adjustment = "
+                f"{base} + {tag} + {mod} + {adj} = {rating}"
+            )
+
+        return (
+            f"[DEBUG] Match rating formula: {competitor_name} = Overall + {display_modifier} + Adjustment = "
+            f"{base} + {mod} + {adj} = {rating}"
+        )
 
     def simulate(self):
         self.result_log.clear()
@@ -66,7 +135,9 @@ class Match:
         effect = pre_event.get("effect")
         match_adjustment = {"Face": 0, "Heel": 0}
         if self.advanced_rules:
-            advanced_adjustment = self.advanced_rules.apply_pre_match(self.face.name, self.heel.name, self.result_log)
+            advanced_adjustment = self.advanced_rules.apply_pre_match(
+                self._competitor_names(self.face), self._competitor_names(self.heel), self.result_log
+            )
             for side, delta in advanced_adjustment.items():
                 match_adjustment[side] += delta
         if effect:
@@ -89,17 +160,13 @@ class Match:
                 self.apply_permanent_change(apply_to, attr, change)
 
         # Step 3: Calculate match ratings (AFTER applying pre-match modifiers)
-        base_face = self.face.get_base_overall()
-        base_heel = self.heel.get_base_overall()
-        mod_face = 0 if modifier == "normal" else self.face.get_attribute_value(modifier)
-        mod_heel = 0 if modifier == "normal" else self.heel.get_attribute_value(modifier)
-        adj_face = match_adjustment["Face"]
-        adj_heel = match_adjustment["Heel"]
-        rating_face = base_face + mod_face + adj_face
-        rating_heel = base_heel + mod_heel + adj_heel
+        face_components = self._rating_components(self.face, modifier, match_adjustment["Face"])
+        heel_components = self._rating_components(self.heel, modifier, match_adjustment["Heel"])
+        rating_face = sum(face_components.values())
+        rating_heel = sum(heel_components.values())
 
-        self.result_log.append(f"[DEBUG] Match rating formula: {self.face.name} = Overall + {display_modifier} + Adjustment = {base_face} + {mod_face} + {adj_face} = {rating_face}")
-        self.result_log.append(f"[DEBUG] Match rating formula: {self.heel.name} = Overall + {display_modifier} + Adjustment = {base_heel} + {mod_heel} + {adj_heel} = {rating_heel}")
+        self.result_log.append(self._format_rating_debug(self.face.name, display_modifier, face_components))
+        self.result_log.append(self._format_rating_debug(self.heel.name, display_modifier, heel_components))
         self.result_log.append(f"[DEBUG] Adjusted match ratings: {self.face.name}={rating_face}, {self.heel.name}={rating_heel}")
 
         # Step 4: Determine Winner
@@ -160,8 +227,14 @@ class Match:
                 self.result_log.append("[DEBUG] No unusual results available.")
 
         if self.advanced_rules:
-            winner_name = winner.name
-            self.advanced_rules.apply_post_match(self.face.name, self.heel.name, winner_name, self.match_type, post_result_entry, self.result_log)
+            self.advanced_rules.apply_post_match(
+                self._competitor_names(self.face),
+                self._competitor_names(self.heel),
+                self._competitor_names(winner),
+                self.match_type,
+                post_result_entry,
+                self.result_log,
+            )
 
         return "\n".join(self.result_log)
 
@@ -189,10 +262,13 @@ class Match:
             if wrestlers is None:
                 raise ValueError("Expected 'wrestlers' key in data file.")
 
-            target_name = self.face.name if target_side == "FACE" else self.heel.name
+            target = self.face if target_side == "FACE" else self.heel
+            target_names = self._competitor_names(target)
             attribute_key = Wrestler.normalize_attribute_name(attribute)
+            found = False
             for wrestler in wrestlers:
-                if wrestler.get("name") == target_name:
+                if wrestler.get("name") in target_names:
+                    found = True
                     if attribute_key == "overall":
                         old_val = wrestler.get("overall", 0)
                         wrestler["overall"] = old_val + change
@@ -201,12 +277,49 @@ class Match:
                         old_val = wrestler["attributes"].get(attribute_key, 0)
                         wrestler["attributes"][attribute_key] = old_val + change
                     self.result_log.append(
-                        f"[DEBUG] {target_name}'s {attribute_key} permanently changed from {old_val} to {old_val + change}"
+                        f"[DEBUG] {wrestler.get('name')}'s {attribute_key} permanently changed from {old_val} to {old_val + change}"
                     )
-                    break
-            else:
-                raise ValueError(f"Wrestler named {target_name} not found.")
+            if not found:
+                missing = ", ".join(target_names)
+                raise ValueError(f"Wrestler named {missing} not found.")
 
             self._safe_write_json(self.wrestlers_file, data)
         except Exception as e:
             self.result_log.append(f"[ERROR] Failed to update permanent change: {e}")
+
+
+class TagMatch(Match):
+    def __init__(self, face_team_data, heel_team_data, match_type, game_data, assigned_roles=None, wrestlers_file="data/wrestlers.json", advanced_rules_config=None):
+        self._init_common(match_type, game_data, wrestlers_file, advanced_rules_config)
+        self.face = TagTeam(face_team_data, "Face")
+        self.heel = TagTeam(heel_team_data, "Heel")
+        self.assigned_roles = assigned_roles or {"Face": self.face.member_names, "Heel": self.heel.member_names}
+
+    def _rating_components(self, competitor, modifier: str, adjustment: float):
+        base = competitor.get_base_overall()
+        tag_bonus = competitor.get_tag_bonus()
+        mod_value = 0 if modifier == "normal" else competitor.get_attribute_value(modifier)
+        return {"base": base, "tag": tag_bonus, "modifier": mod_value, "adjustment": adjustment}
+
+
+def create_match(wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles=None, tag_match=False, **kwargs):
+    """
+    Factory to create a singles or tag match based on the provided inputs.
+
+    - If both wrestler inputs are sequences (teams) or tag_match=True, a TagMatch is created.
+    - Otherwise, a standard Match is created.
+    """
+    if tag_match or (isinstance(wrestler_a_data, (list, tuple)) and isinstance(wrestler_b_data, (list, tuple))):
+        return TagMatch(
+            wrestler_a_data,
+            wrestler_b_data,
+            match_type,
+            game_data,
+            assigned_roles=assigned_roles or {},
+            **kwargs,
+        )
+
+    if assigned_roles is None:
+        raise ValueError("assigned_roles is required for singles matches")
+
+    return Match(wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles, **kwargs)
