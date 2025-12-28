@@ -1,3 +1,6 @@
+import json
+import os
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -103,6 +106,37 @@ class MatchModifierTests(unittest.TestCase):
         self.assertIn("Match Modifier Rolled: Speed", log)
         self.assertIn("Overall + Speed + Adjustment = 1000 + 10 + 0 = 1010", log)
         self.assertIn("Overall + Speed + Adjustment = 1000 + 5 + 0 = 1005", log)
+
+    def test_apply_permanent_change_uses_wrestler_normalization(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            roster_path = os.path.join(tmpdir, "wrestlers.json")
+            with open(roster_path, "w") as f:
+                json.dump(
+                    {
+                        "wrestlers": [
+                            {"name": "Face One", "overall": 1000, "attributes": {"technical": 10}},
+                            {"name": "Heel One", "overall": 1000, "attributes": {"technical": 5}},
+                        ]
+                    },
+                    f,
+                )
+
+            match = Match(
+                self.face_data,
+                self.heel_data,
+                "TV Taping",
+                self.base_game_data,
+                assigned_roles={"Face": "Face One", "Heel": "Heel One"},
+                wrestlers_file=roster_path,
+            )
+
+            match.apply_permanent_change("FACE", "tech", 3)
+
+            with open(roster_path) as f:
+                updated = json.load(f)
+
+            face = next(w for w in updated["wrestlers"] if w["name"] == "Face One")
+            self.assertEqual(face["attributes"]["technical"], 13)
 
 
 if __name__ == "__main__":
