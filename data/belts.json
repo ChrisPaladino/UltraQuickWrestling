@@ -2,17 +2,17 @@
   "belts": [
     {
       "name": "World Championship",
-      "current_holder": "Alyssa Warden",
+      "current_holder": "",
       "prestige": 95
     },
     {
       "name": "Intercontinental Championship",
-      "current_holder": "Diabolica",
+      "current_holder": "",
       "prestige": 82
     },
     {
       "name": "Tag Team Championship",
-      "current_holder": "Candy Crush & Cassie Crush",
+      "current_holder": "",
       "prestige": 76
     }
   ]
