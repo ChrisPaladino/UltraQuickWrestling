@@ -77,12 +77,12 @@ class Match:
         # Step 3: Calculate match ratings (AFTER applying pre-match modifiers)
         base_face = getattr(self.face, 'overall', 0)
         base_heel = getattr(self.heel, 'overall', 0)
-        mod_face = getattr(self.face, modifier, 0)
-        mod_heel = getattr(self.heel, modifier, 0)
+        mod_face = 0 if modifier == "normal" else self.face.get_attribute_value(modifier)
+        mod_heel = 0 if modifier == "normal" else self.heel.get_attribute_value(modifier)
         adj_face = match_adjustment["Face"]
         adj_heel = match_adjustment["Heel"]
-        rating_face = base_face + mod_face + adj_face
-        rating_heel = base_heel + mod_heel + adj_heel
+        rating_face = self.face.get_match_rating(modifier) + adj_face
+        rating_heel = self.heel.get_match_rating(modifier) + adj_heel
 
         self.result_log.append(f"[DEBUG] Match rating formula: {self.face.name} = Overall + {modifier.title()} + Adjustment = {base_face} + {mod_face} + {adj_face} = {rating_face}")
         self.result_log.append(f"[DEBUG] Match rating formula: {self.heel.name} = Overall + {modifier.title()} + Adjustment = {base_heel} + {mod_heel} + {adj_heel} = {rating_heel}")
@@ -164,4 +164,3 @@ class Match:
                 json.dump(data, f, indent=2)
         except Exception as e:
             self.result_log.append(f"[ERROR] Failed to update permanent change: {e}")
-
