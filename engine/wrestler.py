@@ -59,19 +59,16 @@ class Wrestler:
         return None
 
     @classmethod
-    def normalize_attribute_name(cls, key: str) -> str:
-        if not isinstance(key, str):
+    def _normalize_attribute_name(cls, attribute: str) -> str:
+        if not isinstance(attribute, str):
             return ""
 
-        normalized_attribute = cls._normalize_attribute_key(key)
-        if normalized_attribute:
-            return normalized_attribute
-
-        lowered = key.lower()
-        if lowered in {"overall", "normal"}:
+        lowered = attribute.lower()
+        if lowered in ("overall", "normal"):
             return lowered
 
-        return ""
+        normalized = cls._normalize_attribute_key(lowered)
+        return normalized or ""
 
     @classmethod
     def _normalize_attribute_dict(cls, source: dict) -> dict:
