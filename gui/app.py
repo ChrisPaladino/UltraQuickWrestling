@@ -28,7 +28,7 @@ class DataStore:
         self.timeline = self.booking_state.get("timeline", [])
 
     def wrestler_names(self):
-        return [w.get("name", "") for w in self.wrestlers]
+        return sorted([w.get("name", "") for w in self.wrestlers], key=lambda name: name.lower())
 
     def wrestler_display_labels(self):
         labels = []
@@ -37,6 +37,7 @@ class DataStore:
             persona = w.get("persona", "Face")
             overall = w.get("overall", 0)
             labels.append((f"{name} ({persona[0] if persona else '?'} / {overall})", name))
+        labels.sort(key=lambda pair: pair[1].lower())
         return labels
 
     def belt_names(self):
@@ -53,6 +54,12 @@ class DataStore:
 
     def get_event_by_id(self, event_id: str):
         return next((e for e in self.events if e.get("id") == event_id), None)
+
+    def get_match_from_event(self, event_id: str, match_id: str):
+        event = self.get_event_by_id(event_id)
+        if not event:
+            return None
+        return next((m for m in event.get("matches", []) if m.get("id") == match_id), None)
 
     def create_event(self, name: str, date: str, venue: str):
         event = booking.EventCard(name=name, date=date or datetime.utcnow().strftime("%Y-%m-%d"), venue=venue or "")
@@ -82,6 +89,19 @@ class DataStore:
         booking.add_match_to_event(event_id, card_match)
         self.reload()
         return card_match
+
+    def update_match_in_event(self, event_id: str, match_id: str, face_side, heel_side, match_type: str, belts=None, storyline_id=None):
+        updated = booking.CardMatch(
+            id=match_id,
+            match_type=match_type,
+            face_side=list(face_side),
+            heel_side=list(heel_side),
+            belts=list(belts or []),
+            storyline_id=storyline_id,
+        )
+        booking.update_match_in_event(event_id, updated)
+        self.reload()
+        return updated
 
     def remove_match_from_event(self, event_id: str, match_id: str):
         booking.remove_match_from_event(event_id, match_id)
@@ -432,6 +452,7 @@ class BookingPanel(ttk.Frame):
         self.datastore = datastore
         self.on_change = on_change
         self.selected_event_id: str | None = None
+        self._editing_match_id: str | None = None
         self._roster_label_to_name: dict[str, str] = {}
         self._build_widgets()
         self.refresh()
@@ -485,23 +506,49 @@ class BookingPanel(ttk.Frame):
         self.card_event_var = tk.StringVar()
         self.card_match_type_var = tk.StringVar()
         self.card_storyline_var = tk.StringVar()
+        self.card_face_select_var = tk.StringVar()
+        self.card_heel_select_var = tk.StringVar()
 
         self.card_event_combo = ttk.Combobox(card, textvariable=self.card_event_var, state="readonly")
-        self.card_face_list = tk.Listbox(card, selectmode=tk.EXTENDED, height=5, exportselection=False)
-        self.card_heel_list = tk.Listbox(card, selectmode=tk.EXTENDED, height=5, exportselection=False)
         self.card_match_type_combo = ttk.Combobox(card, textvariable=self.card_match_type_var, state="readonly")
         self.card_storyline_combo = ttk.Combobox(card, textvariable=self.card_storyline_var)
         self.card_belts_list = tk.Listbox(card, selectmode=tk.MULTIPLE, height=4, exportselection=False)
+        self.card_face_selected_list = tk.Listbox(card, selectmode=tk.EXTENDED, height=4, exportselection=False)
+        self.card_heel_selected_list = tk.Listbox(card, selectmode=tk.EXTENDED, height=4, exportselection=False)
 
         self.card_event_combo.grid(row=0, column=1, sticky="ew", padx=5, pady=2)
-        self.card_face_list.grid(row=1, column=1, sticky="ew", padx=5, pady=2)
-        self.card_heel_list.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
         self.card_match_type_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
         self.card_storyline_combo.grid(row=4, column=1, sticky="ew", padx=5, pady=2)
         self.card_belts_list.grid(row=5, column=1, sticky="ew", padx=5, pady=2)
 
-        add_match_btn = ttk.Button(card, text="Add Match To Event", command=self._add_match_to_event)
-        add_match_btn.grid(row=6, column=0, columnspan=2, sticky="ew", padx=5, pady=4)
+        face_side_frame = ttk.Frame(card)
+        self.card_face_combo = ttk.Combobox(face_side_frame, textvariable=self.card_face_select_var, state="readonly")
+        add_face_btn = ttk.Button(face_side_frame, text="Add Face", command=self._add_face_selection)
+        remove_face_btn = ttk.Button(face_side_frame, text="Remove Selected", command=lambda: self._remove_side_entries(self.card_face_selected_list))
+        self.card_face_combo.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=2)
+        add_face_btn.grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        remove_face_btn.grid(row=1, column=1, sticky="w", padx=5, pady=2)
+        self.card_face_selected_list.grid(row=2, column=0, columnspan=2, sticky="ew", padx=5, pady=2)
+        face_side_frame.columnconfigure(0, weight=1)
+        face_side_frame.columnconfigure(1, weight=1)
+        face_side_frame.grid(row=1, column=1, sticky="ew")
+
+        heel_side_frame = ttk.Frame(card)
+        self.card_heel_combo = ttk.Combobox(heel_side_frame, textvariable=self.card_heel_select_var, state="readonly")
+        add_heel_btn = ttk.Button(heel_side_frame, text="Add Heel", command=self._add_heel_selection)
+        remove_heel_btn = ttk.Button(heel_side_frame, text="Remove Selected", command=lambda: self._remove_side_entries(self.card_heel_selected_list))
+        self.card_heel_combo.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=2)
+        add_heel_btn.grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        remove_heel_btn.grid(row=1, column=1, sticky="w", padx=5, pady=2)
+        self.card_heel_selected_list.grid(row=2, column=0, columnspan=2, sticky="ew", padx=5, pady=2)
+        heel_side_frame.columnconfigure(0, weight=1)
+        heel_side_frame.columnconfigure(1, weight=1)
+        heel_side_frame.grid(row=2, column=1, sticky="ew")
+
+        add_match_btn = ttk.Button(card, text="Save Match To Event", command=self._add_match_to_event)
+        reset_match_btn = ttk.Button(card, text="Clear Match Form", command=self._reset_match_form)
+        add_match_btn.grid(row=6, column=0, sticky="ew", padx=5, pady=4)
+        reset_match_btn.grid(row=6, column=1, sticky="ew", padx=5, pady=4)
 
         card.columnconfigure(1, weight=1)
         card.grid(row=2, column=0, sticky="ew", pady=8)
@@ -537,6 +584,7 @@ class BookingPanel(ttk.Frame):
             self.card_tree.column(key, width=140 if key in {"match", "storyline"} else 160, anchor="w")
         card_scroll = ttk.Scrollbar(card_frame, orient=tk.VERTICAL, command=self.card_tree.yview)
         self.card_tree.configure(yscrollcommand=card_scroll.set)
+        self.card_tree.bind("<<TreeviewSelect>>", self._on_card_select)
         self.card_tree.grid(row=0, column=0, sticky="nsew")
         card_scroll.grid(row=0, column=1, sticky="ns")
         remove_match_btn = ttk.Button(card_frame, text="Remove Selected Match", command=self._remove_selected_match)
@@ -584,18 +632,48 @@ class BookingPanel(ttk.Frame):
     def _parse_side(self, raw_value: str):
         return [part.strip() for part in (raw_value or "").split(",") if part.strip()]
 
+    def _label_for_name(self, name: str) -> str:
+        for label, actual in self.datastore.wrestler_display_labels():
+            if actual == name:
+                return label
+        return name
+
+    def _add_wrestler_to_side(self, combo: ttk.Combobox, listbox: tk.Listbox):
+        label = combo.get()
+        if not label:
+            return
+        name = self._roster_label_to_name.get(label, label)
+        existing = [self._roster_label_to_name.get(listbox.get(i), listbox.get(i)) for i in range(listbox.size())]
+        if name in existing:
+            messagebox.showinfo("Info", f"{name} is already added to this side.")
+            return
+        listbox.insert(tk.END, label)
+
+    def _add_face_selection(self):
+        self._add_wrestler_to_side(self.card_face_combo, self.card_face_selected_list)
+
+    def _add_heel_selection(self):
+        self._add_wrestler_to_side(self.card_heel_combo, self.card_heel_selected_list)
+
+    def _remove_side_entries(self, listbox: tk.Listbox):
+        selection = listbox.curselection()
+        for idx in reversed(selection):
+            listbox.delete(idx)
+
     def _notify_changed(self):
         if callable(self.on_change):
             self.on_change()
 
     def _new_event(self):
         self.selected_event_id = None
+        self._editing_match_id = None
         self.event_name_var.set("")
         self.event_date_var.set(datetime.utcnow().strftime("%Y-%m-%d"))
         self.event_venue_var.set("")
         self._set_event_notes("")
         self.card_event_var.set("")
         self.card_tree.delete(*self.card_tree.get_children())
+        self._reset_match_form(clear_event=False)
 
     def _add_or_update_event(self):
         name = self.event_name_var.get().strip()
@@ -639,8 +717,8 @@ class BookingPanel(ttk.Frame):
         if not event:
             messagebox.showerror("Error", "Select a valid event to attach the match.")
             return
-        face_side = self._selected_wrestlers(self.card_face_list)
-        heel_side = self._selected_wrestlers(self.card_heel_list)
+        face_side = self._selected_wrestlers(self.card_face_selected_list)
+        heel_side = self._selected_wrestlers(self.card_heel_selected_list)
         if not face_side or not heel_side:
             messagebox.showerror("Error", "Select at least one wrestler for each side.")
             return
@@ -655,12 +733,28 @@ class BookingPanel(ttk.Frame):
         belts = [self.card_belts_list.get(i) for i in belt_indices]
 
         try:
-            self.datastore.add_match_to_event(event.get("id"), face_side, heel_side, match_type, belts=belts, storyline_id=storyline_id)
+            if self._editing_match_id:
+                self.datastore.update_match_in_event(
+                    event.get("id"),
+                    self._editing_match_id,
+                    face_side,
+                    heel_side,
+                    match_type,
+                    belts=belts,
+                    storyline_id=storyline_id,
+                )
+                message = "Match updated on event card."
+            else:
+                created = self.datastore.add_match_to_event(
+                    event.get("id"), face_side, heel_side, match_type, belts=belts, storyline_id=storyline_id
+                )
+                self._editing_match_id = created.id
+                message = "Match added to event card."
         except ValueError as exc:
             messagebox.showerror("Error", str(exc))
             return
 
-        messagebox.showinfo("Added", "Match added to event card.")
+        messagebox.showinfo("Saved", message)
         self.refresh()
         self._notify_changed()
 
@@ -675,8 +769,20 @@ class BookingPanel(ttk.Frame):
         except ValueError as exc:
             messagebox.showerror("Error", str(exc))
             return
+        self._reset_match_form(clear_event=False)
         self.refresh()
         self._notify_changed()
+
+    def _reset_match_form(self, *, clear_event: bool = True):
+        if clear_event:
+            self.card_event_var.set("")
+            self.selected_event_id = None
+        self.card_match_type_var.set("")
+        self.card_storyline_var.set("")
+        self.card_belts_list.selection_clear(0, tk.END)
+        self.card_face_selected_list.delete(0, tk.END)
+        self.card_heel_selected_list.delete(0, tk.END)
+        self._editing_match_id = None
 
     def _set_event_notes(self, text: str):
         self.event_notes_text.delete("1.0", tk.END)
@@ -686,13 +792,19 @@ class BookingPanel(ttk.Frame):
         return self.event_notes_text.get("1.0", tk.END).strip()
 
     def _selected_wrestlers(self, listbox: tk.Listbox):
-        indices = listbox.curselection()
+        indices = range(listbox.size())
         names = []
         for idx in indices:
             label = listbox.get(idx)
             name = self._roster_label_to_name.get(label, label)
             names.append(name)
         return names
+
+    def _set_side_entries(self, names: list[str], listbox: tk.Listbox):
+        listbox.delete(0, tk.END)
+        for name in names:
+            label = self._label_for_name(name)
+            listbox.insert(tk.END, label)
 
     def _on_event_select(self, event):
         selection = self.event_tree.selection()
@@ -708,7 +820,32 @@ class BookingPanel(ttk.Frame):
         self.event_venue_var.set(selected.get("venue", ""))
         self._set_event_notes(selected.get("notes", ""))
         self.card_event_var.set(selected.get("name", ""))
+        self._editing_match_id = None
         self._populate_card_matches(selected)
+
+    def _on_card_select(self, event):
+        selection = self.card_tree.selection()
+        if not selection or not self.selected_event_id:
+            return
+        match_id = selection[0]
+        match = self.datastore.get_match_from_event(self.selected_event_id, match_id)
+        if not match:
+            return
+        self._editing_match_id = match_id
+        self.card_match_type_var.set(match.get("match_type", ""))
+        self._set_side_entries(match.get("face_side", []), self.card_face_selected_list)
+        self._set_side_entries(match.get("heel_side", []), self.card_heel_selected_list)
+        belts = match.get("belts", [])
+        self.card_belts_list.selection_clear(0, tk.END)
+        for idx in range(self.card_belts_list.size()):
+            if self.card_belts_list.get(idx) in belts:
+                self.card_belts_list.selection_set(idx)
+        storyline_id = match.get("storyline_id")
+        storyline = next((s for s in self.datastore.storylines if s.get("id") == storyline_id), None)
+        if storyline:
+            self.card_storyline_var.set(storyline.get("name", ""))
+        elif not storyline_id:
+            self.card_storyline_var.set("")
 
     def _populate_timeline(self):
         for row in self.timeline_tree.get_children():
@@ -769,12 +906,16 @@ class BookingPanel(ttk.Frame):
         self.card_belts_list.delete(0, tk.END)
         for belt in self.datastore.belt_names():
             self.card_belts_list.insert(tk.END, belt)
+        roster_labels = [label for label, _ in self.datastore.wrestler_display_labels()]
         self._roster_label_to_name = {label: name for label, name in self.datastore.wrestler_display_labels()}
-        self.card_face_list.delete(0, tk.END)
-        self.card_heel_list.delete(0, tk.END)
-        for label in self._roster_label_to_name.keys():
-            self.card_face_list.insert(tk.END, label)
-            self.card_heel_list.insert(tk.END, label)
+        self.card_face_combo.configure(values=roster_labels)
+        self.card_heel_combo.configure(values=roster_labels)
+        if roster_labels and not self.card_face_select_var.get():
+            self.card_face_select_var.set(roster_labels[0])
+        if roster_labels and not self.card_heel_select_var.get():
+            self.card_heel_select_var.set(roster_labels[0])
+        self._set_side_entries(self._selected_wrestlers(self.card_face_selected_list), self.card_face_selected_list)
+        self._set_side_entries(self._selected_wrestlers(self.card_heel_selected_list), self.card_heel_selected_list)
         self._populate_events()
         self._populate_timeline()
         if self.selected_event_id:
@@ -865,55 +1006,61 @@ class MatchPanel(ttk.Frame):
         )
 
         ttk.Label(self, text="Event (optional)").grid(row=1, column=0, sticky="w", pady=2)
-        ttk.Label(self, text="Storyline (optional)").grid(row=2, column=0, sticky="w", pady=2)
-        ttk.Label(self, text="Face Wrestler").grid(row=3, column=0, sticky="w", pady=2)
-        ttk.Label(self, text="Heel Wrestler").grid(row=4, column=0, sticky="w", pady=2)
-        ttk.Label(self, text="Match Type").grid(row=5, column=0, sticky="w", pady=2)
+        ttk.Label(self, text="Card Match (optional)").grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Label(self, text="Storyline (optional)").grid(row=3, column=0, sticky="w", pady=2)
+        ttk.Label(self, text="Face Wrestler").grid(row=4, column=0, sticky="w", pady=2)
+        ttk.Label(self, text="Heel Wrestler").grid(row=5, column=0, sticky="w", pady=2)
+        ttk.Label(self, text="Match Type").grid(row=6, column=0, sticky="w", pady=2)
 
-        wrestler_names = self.datastore.wrestler_names()
         self.event_var = tk.StringVar()
         self.storyline_var = tk.StringVar()
-        self.face_var = tk.StringVar(value=wrestler_names[0] if wrestler_names else "")
-        self.heel_var = tk.StringVar(value=wrestler_names[1] if len(wrestler_names) > 1 else "")
+        self.face_var = tk.StringVar()
+        self.heel_var = tk.StringVar()
         self.match_type_var = tk.StringVar()
+        self.match_card_var = tk.StringVar()
+        self._roster_label_to_name: dict[str, str] = {}
+        self._match_label_to_id: dict[str, str] = {}
+        self._selected_match_id: str | None = None
 
         self.event_combo = ttk.Combobox(self, values=self.datastore.event_names(), textvariable=self.event_var)
+        self.match_card_combo = ttk.Combobox(self, values=[], textvariable=self.match_card_var, state="readonly")
         self.storyline_combo = ttk.Combobox(self, values=self.datastore.storyline_names(), textvariable=self.storyline_var)
-        self.face_combo = ttk.Combobox(self, values=wrestler_names, textvariable=self.face_var)
-        self.heel_combo = ttk.Combobox(self, values=wrestler_names, textvariable=self.heel_var)
+        self.face_combo = ttk.Combobox(self, values=[], textvariable=self.face_var, state="readonly")
+        self.heel_combo = ttk.Combobox(self, values=[], textvariable=self.heel_var, state="readonly")
         self.match_type_combo = ttk.Combobox(self, values=self._match_types(), textvariable=self.match_type_var, state="readonly")
         self.belt_list = tk.Listbox(self, selectmode=tk.MULTIPLE, height=4, exportselection=False)
 
-        if self._match_types():
-            self.match_type_var.set(self._match_types()[0])
+        self.event_combo.bind("<<ComboboxSelected>>", self._on_event_change)
+        self.match_card_combo.bind("<<ComboboxSelected>>", self._on_match_from_event_selected)
 
         self.event_combo.grid(row=1, column=1, sticky="ew", padx=5, pady=2)
-        self.storyline_combo.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
-        self.face_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
-        self.heel_combo.grid(row=4, column=1, sticky="ew", padx=5, pady=2)
-        self.match_type_combo.grid(row=5, column=1, sticky="ew", padx=5, pady=2)
-        ttk.Label(self, text="Belts on the line (optional)").grid(row=6, column=0, sticky="nw", pady=2)
-        self.belt_list.grid(row=6, column=1, sticky="ew", padx=5, pady=2)
+        self.match_card_combo.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
+        self.storyline_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
+        self.face_combo.grid(row=4, column=1, sticky="ew", padx=5, pady=2)
+        self.heel_combo.grid(row=5, column=1, sticky="ew", padx=5, pady=2)
+        self.match_type_combo.grid(row=6, column=1, sticky="ew", padx=5, pady=2)
+        ttk.Label(self, text="Belts on the line (optional)").grid(row=7, column=0, sticky="nw", pady=2)
+        self.belt_list.grid(row=7, column=1, sticky="ew", padx=5, pady=2)
 
         advanced_frame = self._build_advanced_rules_frame()
-        advanced_frame.grid(row=7, column=0, columnspan=2, sticky="ew", pady=6)
+        advanced_frame.grid(row=8, column=0, columnspan=2, sticky="ew", pady=6)
 
         simulate_button = ttk.Button(self, text="Simulate", command=self._simulate)
-        simulate_button.grid(row=8, column=0, columnspan=2, pady=8)
+        simulate_button.grid(row=9, column=0, columnspan=2, pady=8)
 
         log_frame = ttk.LabelFrame(self, text="Result Log")
         self.log_text = tk.Text(log_frame, height=15, wrap=tk.WORD, state=tk.DISABLED)
         log_scroll = ttk.Scrollbar(log_frame, command=self.log_text.yview)
         self.log_text.configure(yscrollcommand=log_scroll.set)
 
-        log_frame.grid(row=9, column=0, columnspan=2, sticky="nsew", pady=5)
+        log_frame.grid(row=10, column=0, columnspan=2, sticky="nsew", pady=5)
         self.log_text.grid(row=0, column=0, sticky="nsew")
         log_scroll.grid(row=0, column=1, sticky="ns")
         log_frame.columnconfigure(0, weight=1)
         log_frame.rowconfigure(0, weight=1)
 
         self.columnconfigure(1, weight=1)
-        self.rowconfigure(9, weight=1)
+        self.rowconfigure(10, weight=1)
 
     def _build_advanced_rules_frame(self):
         frame = ttk.LabelFrame(self, text="Advanced Rules")
@@ -1013,10 +1160,81 @@ class MatchPanel(ttk.Frame):
                 types.append(match_type)
         return types
 
+    def _roster_labels(self):
+        labels = self.datastore.wrestler_display_labels()
+        self._roster_label_to_name = {label: name for label, name in labels}
+        return [label for label, _ in labels]
+
+    def _name_from_label(self, label: str) -> str:
+        return self._roster_label_to_name.get(label, label)
+
+    def _label_for_name(self, name: str) -> str:
+        for label, actual in self.datastore.wrestler_display_labels():
+            if actual == name:
+                return label
+        return name
+
+    def _populate_match_choices(self, event_name: str):
+        matches = []
+        self._match_label_to_id = {}
+        self._selected_match_id = None
+        event = self.datastore.get_event_by_name(event_name) if event_name else None
+        if event:
+            for idx, match in enumerate(event.get("matches", []), start=1):
+                faces = ", ".join(match.get("face_side", []))
+                heels = ", ".join(match.get("heel_side", []))
+                label = f"{idx}. {match.get('match_type', '')}: {faces} vs {heels}"
+                self._match_label_to_id[label] = match.get("id")
+                matches.append(label)
+        self.match_card_combo.configure(values=matches)
+        if matches:
+            if self.match_card_var.get() not in matches:
+                self.match_card_var.set(matches[0])
+            self._on_match_from_event_selected()
+        else:
+            self.match_card_var.set("")
+            self._selected_match_id = None
+
+    def _set_belt_selection(self, belts: list[str]):
+        self.belt_list.selection_clear(0, tk.END)
+        for idx in range(self.belt_list.size()):
+            if self.belt_list.get(idx) in belts:
+                self.belt_list.selection_set(idx)
+
+    def _apply_match_to_form(self, match: dict):
+        face_side = match.get("face_side", [])
+        heel_side = match.get("heel_side", [])
+        if face_side:
+            self.face_var.set(self._label_for_name(face_side[0]))
+        if heel_side:
+            self.heel_var.set(self._label_for_name(heel_side[0]))
+        if match.get("match_type"):
+            self.match_type_var.set(match.get("match_type"))
+        self._set_belt_selection(match.get("belts", []))
+        storyline_id = match.get("storyline_id")
+        storyline = next((s for s in self.datastore.storylines if s.get("id") == storyline_id), None)
+        if storyline:
+            self.storyline_var.set(storyline.get("name", ""))
+
+    def _on_event_change(self, event=None):
+        self._populate_match_choices(self.event_var.get())
+
+    def _on_match_from_event_selected(self, event=None):
+        label = self.match_card_var.get()
+        self._selected_match_id = self._match_label_to_id.get(label)
+        if not self._selected_match_id:
+            return
+        event = self.datastore.get_event_by_name(self.event_var.get().strip()) if self.event_var.get() else None
+        if not event:
+            return
+        match = self.datastore.get_match_from_event(event.get("id"), self._selected_match_id)
+        if match:
+            self._apply_match_to_form(match)
+
     def refresh(self):
-        wrestler_names = self.datastore.wrestler_names()
-        self.face_combo.configure(values=wrestler_names)
-        self.heel_combo.configure(values=wrestler_names)
+        roster_labels = self._roster_labels()
+        self.face_combo.configure(values=roster_labels)
+        self.heel_combo.configure(values=roster_labels)
         match_types = self._match_types()
         self.match_type_combo.configure(values=match_types)
         self.event_combo.configure(values=self.datastore.event_names())
@@ -1024,20 +1242,25 @@ class MatchPanel(ttk.Frame):
         self.belt_list.delete(0, tk.END)
         for belt in self.datastore.belt_names():
             self.belt_list.insert(tk.END, belt)
-        if wrestler_names and not self.face_var.get():
-            self.face_var.set(wrestler_names[0])
-        if len(wrestler_names) > 1 and not self.heel_var.get():
-            self.heel_var.set(wrestler_names[1])
+        if roster_labels and not self.face_var.get():
+            self.face_var.set(roster_labels[0])
+        if len(roster_labels) > 1 and not self.heel_var.get():
+            self.heel_var.set(roster_labels[1])
+        elif roster_labels and not self.heel_var.get():
+            self.heel_var.set(roster_labels[0])
         if match_types and not self.match_type_var.get():
             self.match_type_var.set(match_types[0])
         if self.datastore.event_names() and not self.event_var.get():
             self.event_var.set(self.datastore.event_names()[0])
         if self.datastore.storyline_names() and not self.storyline_var.get():
             self.storyline_var.set(self.datastore.storyline_names()[0])
+        self._populate_match_choices(self.event_var.get())
 
     def _simulate(self):
-        face_name = self.face_var.get()
-        heel_name = self.heel_var.get()
+        face_label = self.face_var.get()
+        heel_label = self.heel_var.get()
+        face_name = self._name_from_label(face_label)
+        heel_name = self._name_from_label(heel_label)
         match_type = self.match_type_var.get()
         if not face_name or not heel_name:
             messagebox.showerror("Error", "Select both wrestlers.")
@@ -1070,13 +1293,23 @@ class MatchPanel(ttk.Frame):
         if event_name and not event:
             event = self.datastore.create_event(event_name, datetime.utcnow().strftime("%Y-%m-%d"), "")
         match_card_id = None
-        event_id = None
+        event_id = event.get("id") if event else None
         if event:
-            card_match = self.datastore.add_match_to_event(
-                event.get("id"), assigned_roles["Face"], assigned_roles["Heel"], match_type, belts=belts, storyline_id=storyline_id
-            )
-            event_id = event.get("id")
-            match_card_id = card_match.id
+            try:
+                if self._selected_match_id:
+                    self.datastore.update_match_in_event(
+                        event_id, self._selected_match_id, assigned_roles["Face"], assigned_roles["Heel"], match_type, belts=belts, storyline_id=storyline_id
+                    )
+                    match_card_id = self._selected_match_id
+                else:
+                    card_match = self.datastore.add_match_to_event(
+                        event_id, assigned_roles["Face"], assigned_roles["Heel"], match_type, belts=belts, storyline_id=storyline_id
+                    )
+                    match_card_id = card_match.id
+                    self._selected_match_id = match_card_id
+            except ValueError as exc:
+                messagebox.showerror("Error", str(exc))
+                return
         booking_context = booking.MatchBookingContext(
             event_id=event_id, match_id=match_card_id, storyline_id=storyline_id, belts=belts
         )
@@ -1100,6 +1333,7 @@ class MatchPanel(ttk.Frame):
             messagebox.showerror("Simulation error", str(exc))
             return
         self.datastore.reload()
+        self.refresh()
         if callable(self.on_timeline_update):
             self.on_timeline_update()
 

@@ -207,6 +207,35 @@ def add_match_to_event(event_id: str, card_match: CardMatch) -> CardMatch:
     return card_match
 
 
+def update_match_in_event(event_id: str, updated_match: CardMatch) -> CardMatch:
+    state = load_state()
+    updated_events = []
+    found_event = False
+    updated = False
+    for raw_event in state.get("events", []):
+        if raw_event.get("id") == event_id:
+            found_event = True
+            event = EventCard.from_dict(raw_event)
+            new_matches = []
+            for match in event.matches:
+                if match.id == updated_match.id:
+                    new_matches.append(updated_match)
+                    updated = True
+                else:
+                    new_matches.append(match)
+            if not updated:
+                raise ValueError(f"Match with id '{updated_match.id}' not found on event '{event_id}'.")
+            event.matches = new_matches
+            updated_events.append(event.to_dict())
+        else:
+            updated_events.append(raw_event)
+    if not found_event:
+        raise ValueError(f"Event with id '{event_id}' not found.")
+    state["events"] = updated_events
+    save_state(state)
+    return updated_match
+
+
 def remove_match_from_event(event_id: str, match_id: str) -> None:
     state = load_state()
     updated_events = []
