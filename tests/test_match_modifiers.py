@@ -14,21 +14,27 @@ class MatchModifierTests(unittest.TestCase):
             "name": "Face One",
             "persona": "Face",
             "overall": 1000,
+            "overall_modifier": 0,
             "attributes": {
                 "cheating": 100,
                 "speed": 10,
                 "tech": 25,
             },
+            "heat_modifier": 0,
+            "titles": [],
         }
         self.heel_data = {
             "name": "Heel One",
             "persona": "Heel",
             "overall": 1000,
+            "overall_modifier": 0,
             "attributes": {
                 "cheating": 0,
                 "speed": 5,
                 "tech": 5,
             },
+            "heat_modifier": 0,
+            "titles": [],
         }
 
         self.base_game_data = {
@@ -114,8 +120,22 @@ class MatchModifierTests(unittest.TestCase):
                 json.dump(
                     {
                         "wrestlers": [
-                            {"name": "Face One", "overall": 1000, "attributes": {"technical": 10}},
-                            {"name": "Heel One", "overall": 1000, "attributes": {"technical": 5}},
+                            {
+                                "name": "Face One",
+                                "overall": 1000,
+                                "overall_modifier": 0,
+                                "attributes": {"technical": 10},
+                                "heat_modifier": 0,
+                                "titles": [],
+                            },
+                            {
+                                "name": "Heel One",
+                                "overall": 1000,
+                                "overall_modifier": 0,
+                                "attributes": {"technical": 5},
+                                "heat_modifier": 0,
+                                "titles": [],
+                            },
                         ]
                     },
                     f,

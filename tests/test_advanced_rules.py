@@ -52,13 +52,21 @@ class AdvancedRulesTests(unittest.TestCase):
                 "name": "Face One",
                 "persona": "Face",
                 "overall": 1000,
+                "overall_modifier": 0,
                 "injured": True,
                 "injury_duration": 1,
                 "titles": [],
                 "rivalry_id": None,
                 "heat_modifier": 0,
             }
-            heel = {"name": "Heel One", "persona": "Heel", "overall": 950, "titles": []}
+            heel = {
+                "name": "Heel One",
+                "persona": "Heel",
+                "overall": 950,
+                "overall_modifier": 0,
+                "titles": [],
+                "heat_modifier": 0,
+            }
             roster_path = self._build_roster([face, heel], tmpdir)
             match = self._build_match(
                 face,
@@ -80,8 +88,22 @@ class AdvancedRulesTests(unittest.TestCase):
 
     def test_new_injury_applied_to_loser(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            face = {"name": "Face One", "persona": "Face", "overall": 1050, "titles": []}
-            heel = {"name": "Heel One", "persona": "Heel", "overall": 950, "titles": []}
+            face = {
+                "name": "Face One",
+                "persona": "Face",
+                "overall": 1050,
+                "overall_modifier": 0,
+                "titles": [],
+                "heat_modifier": 0,
+            }
+            heel = {
+                "name": "Heel One",
+                "persona": "Heel",
+                "overall": 950,
+                "overall_modifier": 0,
+                "titles": [],
+                "heat_modifier": 0,
+            }
             roster_path = self._build_roster([face, heel], tmpdir)
             match = self._build_match(
                 face,
@@ -102,8 +124,22 @@ class AdvancedRulesTests(unittest.TestCase):
 
     def test_title_change_on_win(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            face = {"name": "Face One", "persona": "Face", "overall": 1100, "titles": []}
-            heel = {"name": "Heel One", "persona": "Heel", "overall": 900, "titles": ["World"]}
+            face = {
+                "name": "Face One",
+                "persona": "Face",
+                "overall": 1100,
+                "overall_modifier": 0,
+                "titles": [],
+                "heat_modifier": 0,
+            }
+            heel = {
+                "name": "Heel One",
+                "persona": "Heel",
+                "overall": 900,
+                "overall_modifier": 0,
+                "titles": ["World"],
+                "heat_modifier": 0,
+            }
             roster_path = self._build_roster([face, heel], tmpdir)
             match = self._build_match(
                 face,
@@ -129,6 +165,7 @@ class AdvancedRulesTests(unittest.TestCase):
                 "name": "Face One",
                 "persona": "Face",
                 "overall": 1000,
+                "overall_modifier": 0,
                 "titles": [],
                 "rivalry_id": "R1",
                 "heat_modifier": 0,
@@ -137,6 +174,7 @@ class AdvancedRulesTests(unittest.TestCase):
                 "name": "Heel One",
                 "persona": "Heel",
                 "overall": 900,
+                "overall_modifier": 0,
                 "titles": [],
                 "rivalry_id": "R1",
                 "heat_modifier": 0,
