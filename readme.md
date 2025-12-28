@@ -117,7 +117,7 @@ Advanced rule handling lives in `engine/advanced_rules.py` and can be toggled wh
 
 ### Enabling
 
-Pass an `advanced_rules_config` dictionary (or `AdvancedRulesConfig`) into `Match`:
+Pass an `advanced_rules_config` dictionary (or `AdvancedRulesConfig`) into `Match`. The defaults keep everything on except for bonuses that would change ratings on clean finishes:
 
 ```python
 from engine.match import Match
@@ -126,12 +126,14 @@ config = {
   "enabled": True,
   "title_on_the_line": "World Championship",  # optional
   "injury_chance": 0.15,
-  "enable_seasons": True,
-  "enable_persistent_modifiers": True,        # optional; defaults to True
-  "clean_win_bonus": 5,
-  "clean_loss_penalty": 5,
-  "title_overall_bonus": 5,
-  "heat_on_title_changes": True,
+  "enable_seasons": True,                     # default: True
+  "enable_persistent_modifiers": True,        # default: True
+  "enable_title_overall_bonus": True,         # default: True
+  "heat_change_on_titles": True,              # alias: heat_on_title_changes, default: True
+  "clean_win_bonus": 5,                       # default: 0 (off)
+  "clean_loss_penalty": 5,                    # default: 0 (off)
+  "title_overall_bonus": 5,                   # default: 0 (off)
+  "season_length": 12,                        # default: 12 weeks
 }
 match = Match(face_data, heel_data, match_type, game_data, assigned_roles, advanced_rules_config=config)
 ```
@@ -146,14 +148,18 @@ If `enabled` is `False` or omitted, core rules run unchanged.
 - `enable_heat` (default `True`): Persist `heat_modifier` changes per match and factor them into ratings.
 - `enable_seasons` (default `True`): Track `season.current_week`/`season.length` in `data/wrestlers.json`.
 - `enable_persistent_modifiers` (default `True`): Allow permanent modifiers to be written/read. Turn this off to disable rivalry heat swings, clean-finish bonuses/penalties, title sync bonuses, and ongoing heat deltas even while other advanced hooks stay active.
+- `enable_title_overall_bonus` (default `True`): Gate whether held titles feed the `title_overall_bonus` into persistent `overall_modifier`.
+- `heat_change_on_titles` (default `True`; alias `heat_on_title_changes`): Toggle whether title wins/losses apply `base_heat_delta` to the `heat_modifier`.
 
 Other tunables include `injury_penalty`, `injury_duration`, `rivalry_heat_bonus`, `rivalry_heat_penalty`, and `base_heat_delta`.
 
 #### Persistent modifiers
 
-- Clean finishes can apply overall changes (`clean_win_bonus`, `clean_loss_penalty`), and champions can gain an overall boost (`title_overall_bonus`) and optional Heat delta (`heat_on_title_changes`/`heat_change_on_titles`). These are saved to `overall_modifier`/`heat_modifier`.
+- Clean finishes can apply overall changes (`clean_win_bonus`, `clean_loss_penalty`), and champions can gain an overall boost (`title_overall_bonus`) and optional Heat delta (`heat_change_on_titles`). These are saved to `overall_modifier`/`heat_modifier`.
 - Defaults mirror the existing behavior: persistence is on, clean bonuses/penalties are `0` (off), `title_overall_bonus` is `0` (off), and `heat_on_title_changes` is `True`.
 - Persistent modifiers share the same `data/wrestlers.json` storage that `enable_seasons` uses. You can run persistent modifiers with or without seasons enabled; turning seasons off does not disable modifier persistence.
+- `overall_modifier` feeds directly into a wrestler's base overall for every future match. `heat_modifier` is averaged across the side in pre-match adjustments, directly nudging the `Face`/`Heel` ratings before the result chart roll.
+- Season tracking is independent but complementary: for leagues tracking weekly play, keep `enable_seasons` on so `season.current_week` ticks forward while persistent modifiers keep momentum changes between shows.
 
 ### Persisted Data
 
@@ -164,6 +170,40 @@ Other tunables include `injury_penalty`, `injury_duration`, `rivalry_heat_bonus`
 - `heat_modifier`: persistent heat delta applied to match ratings
 - `injured` / `injury_duration`: injury tracking (backward compatible defaults provided)
 - `tag`: optional rating for tag matches; defaults to `0` when missing so existing rosters remain valid.
+- `overall_modifier`: long-term overall swings from clean finishes or title bonuses
+- `title_overall_bonus_applied` / `title_heat_bonus_applied`: internal bookkeeping for syncing title-driven modifiers
+- `season`: top-level block with `length` and `current_week` when season tracking is active.
+
+Example structure with all advanced toggles on and clean/title bonuses enabled:
+
+```python
+advanced_rules_config = {
+  "enabled": True,
+  "enable_persistent_modifiers": True,
+  "enable_heat": True,
+  "enable_title_overall_bonus": True,
+  "heat_change_on_titles": True,
+  "clean_win_bonus": 5,
+  "clean_loss_penalty": 5,
+  "title_overall_bonus": 5,
+  "enable_seasons": True,
+}
+```
+
+`data/wrestlers.json` then accrues fields such as:
+
+```json
+{
+  "name": "Sample Wrestler",
+  "overall_modifier": 5,
+  "heat_modifier": 10,
+  "titles": ["World Championship"],
+  "title_overall_bonus_applied": 5,
+  "title_heat_bonus_applied": 5,
+  "rivalry_id": "FEUD-123",
+  "season": {"length": 12, "current_week": 4}
+}
+```
 
 Tag-specific charts live alongside the singles data in `data/game_data.json`:
 
