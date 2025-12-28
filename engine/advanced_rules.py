@@ -103,27 +103,46 @@ class AdvancedRulesEngine:
                 return wrestler
         return None
 
-    def apply_pre_match(self, face_name: str, heel_name: str, log: list) -> Dict[str, int]:
+    @staticmethod
+    def _ensure_list(names) -> list:
+        if names is None:
+            return []
+        if isinstance(names, (list, tuple, set)):
+            return [n for n in names if n]
+        return [names]
+
+    def apply_pre_match(self, face_name, heel_name, log: list) -> Dict[str, int]:
         """Apply pre-match hooks and return per-side rating adjustments."""
         adjustments = {"Face": 0, "Heel": 0}
         if not self.config.enabled:
             return adjustments
 
         roster = self.load_roster()
-        for side, name in (("Face", face_name), ("Heel", heel_name)):
-            wrestler = self._find_wrestler(name)
-            if not wrestler:
+        for side, names in (("Face", face_name), ("Heel", heel_name)):
+            name_list = self._ensure_list(names)
+            if not name_list:
                 continue
 
-            if self.config.enable_injuries and wrestler.get("injured"):
-                adjustments[side] += self.config.injury_penalty
-                log.append(f"[DEBUG] {name} is injured ({wrestler.get('injury_duration', 0)} weeks left), penalty {self.config.injury_penalty}")
+            side_total = 0
+            participants = 0
+            for name in name_list:
+                wrestler = self._find_wrestler(name)
+                if not wrestler:
+                    continue
+                participants += 1
 
-            if self.config.enable_heat and self.config.enable_persistent_modifiers:
-                heat_mod = wrestler.get("heat_modifier", 0)
-                if heat_mod:
-                    adjustments[side] += heat_mod
-                    log.append(f"[DEBUG] {name} carries heat modifier {heat_mod:+}")
+                if self.config.enable_injuries and wrestler.get("injured"):
+                    side_total += self.config.injury_penalty
+                    log.append(f"[DEBUG] {name} is injured ({wrestler.get('injury_duration', 0)} weeks left), penalty {self.config.injury_penalty}")
+
+                if self.config.enable_heat and self.config.enable_persistent_modifiers:
+                    heat_mod = wrestler.get("heat_modifier", 0)
+                    if heat_mod:
+                        side_total += heat_mod
+                        log.append(f"[DEBUG] {name} carries heat modifier {heat_mod:+}")
+
+            if participants:
+                adjustments[side] = side_total / participants
 
         # Initialize season tracking if desired
         if self.config.enable_seasons:
@@ -133,15 +152,35 @@ class AdvancedRulesEngine:
 
         return adjustments
 
-    def apply_post_match(self, face_name: str, heel_name: str, winner_name: str, match_type: str, post_result_entry: Optional[dict], log: list):
+    def apply_post_match(self, face_name, heel_name, winner_name, match_type: str, post_result_entry: Optional[dict], log: list):
         """Apply post-match hooks (injuries, titles, rivalries, heat, persistent modifiers, season ticking)."""
         if not self.config.enabled:
             return
 
-        face = self._find_wrestler(face_name)
-        heel = self._find_wrestler(heel_name)
-        winner = self._find_wrestler(winner_name)
-        loser = heel if winner_name == face_name else face
+        face_names = self._ensure_list(face_name)
+        heel_names = self._ensure_list(heel_name)
+        winner_names = self._ensure_list(winner_name)
+
+        face_wrestlers = []
+        for name in face_names:
+            wrestler = self._find_wrestler(name)
+            if wrestler:
+                face_wrestlers.append(wrestler)
+
+        heel_wrestlers = []
+        for name in heel_names:
+            wrestler = self._find_wrestler(name)
+            if wrestler:
+                heel_wrestlers.append(wrestler)
+
+        winner_side = "Face" if any(name in face_names for name in winner_names) else "Heel"
+        winner_pool = face_wrestlers if winner_side == "Face" else heel_wrestlers
+        loser_pool = heel_wrestlers if winner_side == "Face" else face_wrestlers
+
+        winner = winner_pool[0] if winner_pool else None
+        loser = loser_pool[0] if loser_pool else None
+        face = face_wrestlers[0] if face_wrestlers else None
+        heel = heel_wrestlers[0] if heel_wrestlers else None
 
         if self.config.enable_titles:
             self._handle_titles(winner, loser, log)
