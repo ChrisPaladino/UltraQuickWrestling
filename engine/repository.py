@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import uuid
 from typing import Any, Dict, List, Tuple
 
 from engine.file_utils import safe_write_json
@@ -44,9 +45,17 @@ def load_belts() -> List[dict]:
     return data.get("belts", [])
 
 
+def load_booking_state() -> Dict[str, Any]:
+    data = _read_json("events.json", default={"events": [], "storylines": [], "timeline": []})
+    data.setdefault("events", [])
+    data.setdefault("storylines", [])
+    data.setdefault("timeline", [])
+    return data
+
+
 def load_events() -> List[dict]:
-    data = _read_json("events.json", default={"events": []})
-    return data.get("events", [])
+    state = load_booking_state()
+    return state.get("events", [])
 
 
 def load_game_data() -> Dict[str, Any]:
@@ -64,9 +73,19 @@ def save_belts(belts: List[dict]) -> None:
     safe_write_json(str(data_path("belts.json")), payload)
 
 
-def save_events(events: List[dict]) -> None:
-    payload = {"events": events}
+def save_booking_state(state: Dict[str, Any]) -> None:
+    payload = {
+        "events": state.get("events", []),
+        "storylines": state.get("storylines", []),
+        "timeline": state.get("timeline", []),
+    }
     safe_write_json(str(data_path("events.json")), payload)
+
+
+def save_events(events: List[dict]) -> None:
+    payload = load_booking_state()
+    payload["events"] = events
+    save_booking_state(payload)
 
 
 def _find_by_name(items: List[dict], name: str) -> Tuple[int, dict]:
@@ -142,7 +161,11 @@ def schedule_event(event: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(name, str) or not name.strip():
         raise ValueError("Event must include a non-empty 'name'.")
 
-    events = load_events()
+    event = {**event}
+    event.setdefault("id", f"event-{uuid.uuid4().hex[:8]}")
+    state = load_booking_state()
+    events = state.get("events", [])
     events.append(event)
-    save_events(events)
+    state["events"] = events
+    save_booking_state(state)
     return event

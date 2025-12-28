@@ -3,6 +3,7 @@ import os
 import random
 from typing import Iterable, List, Sequence
 
+from engine.booking import MatchBookingContext
 from engine.wrestler import Wrestler
 from engine.advanced_rules import AdvancedRulesEngine, AdvancedRulesConfig
 from engine.file_utils import safe_write_json
@@ -44,7 +45,17 @@ class TagTeam:
 
 
 class Match:
-    def __init__(self, wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles, wrestlers_file="data/wrestlers.json", advanced_rules_config=None):
+    def __init__(
+        self,
+        wrestler_a_data,
+        wrestler_b_data,
+        match_type,
+        game_data,
+        assigned_roles,
+        wrestlers_file="data/wrestlers.json",
+        advanced_rules_config=None,
+        booking_context: MatchBookingContext | None = None,
+    ):
         face_names = assigned_roles.get("Face") if isinstance(assigned_roles, dict) else None
         face_names_normalized = set()
         if isinstance(face_names, (list, tuple, set)):
@@ -60,13 +71,14 @@ class Match:
 
         self.face = Wrestler(wrestler_a_data if wrestler_a_face else wrestler_b_data)
         self.heel = Wrestler(wrestler_b_data if wrestler_a_face else wrestler_a_data)
-        self._init_common(match_type, game_data, wrestlers_file, advanced_rules_config)
+        self._init_common(match_type, game_data, wrestlers_file, advanced_rules_config, booking_context)
 
-    def _init_common(self, match_type, game_data, wrestlers_file="data/wrestlers.json", advanced_rules_config=None):
+    def _init_common(self, match_type, game_data, wrestlers_file="data/wrestlers.json", advanced_rules_config=None, booking_context=None):
         self.match_type = match_type
         self.game_data = game_data
         self.result_log = []
         self.wrestlers_file = wrestlers_file
+        self.booking_context: MatchBookingContext | None = booking_context
         if isinstance(advanced_rules_config, AdvancedRulesConfig):
             self.advanced_config = advanced_rules_config
         else:
@@ -255,6 +267,16 @@ class Match:
                 self.result_log,
             )
 
+        if self.booking_context:
+            loser = self.heel if winner == self.face else self.face
+            self.booking_context.record_outcome(
+                winner=self._competitor_names(winner),
+                loser=self._competitor_names(loser),
+                post_result=post_result,
+                log="\n".join(self.result_log),
+                match_type=self.match_type,
+            )
+
         return "\n".join(self.result_log)
 
     def apply_permanent_change(self, target_side, attribute, change):
@@ -293,8 +315,18 @@ class Match:
 
 
 class TagMatch(Match):
-    def __init__(self, face_team_data, heel_team_data, match_type, game_data, assigned_roles=None, wrestlers_file="data/wrestlers.json", advanced_rules_config=None):
-        self._init_common(match_type, game_data, wrestlers_file, advanced_rules_config)
+    def __init__(
+        self,
+        face_team_data,
+        heel_team_data,
+        match_type,
+        game_data,
+        assigned_roles=None,
+        wrestlers_file="data/wrestlers.json",
+        advanced_rules_config=None,
+        booking_context: MatchBookingContext | None = None,
+    ):
+        self._init_common(match_type, game_data, wrestlers_file, advanced_rules_config, booking_context)
         self.face = TagTeam(face_team_data, "Face")
         self.heel = TagTeam(heel_team_data, "Heel")
         self.assigned_roles = assigned_roles or {"Face": self.face.member_names, "Heel": self.heel.member_names}
@@ -312,7 +344,16 @@ class TagMatch(Match):
         return {"base": base, "tag": tag_bonus, "modifier": mod_value, "adjustment": adjustment}
 
 
-def create_match(wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles=None, tag_match=False, **kwargs):
+def create_match(
+    wrestler_a_data,
+    wrestler_b_data,
+    match_type,
+    game_data,
+    assigned_roles=None,
+    tag_match=False,
+    booking_context: MatchBookingContext | None = None,
+    **kwargs,
+):
     """
     Factory to create a singles or tag match based on the provided inputs.
 
@@ -326,10 +367,11 @@ def create_match(wrestler_a_data, wrestler_b_data, match_type, game_data, assign
             match_type,
             game_data,
             assigned_roles=assigned_roles or {},
+            booking_context=booking_context,
             **kwargs,
         )
 
     if assigned_roles is None:
         raise ValueError("assigned_roles is required for singles matches")
 
-    return Match(wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles, **kwargs)
+    return Match(wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles, booking_context=booking_context, **kwargs)

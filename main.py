@@ -1,7 +1,9 @@
 import argparse
 import json
+from datetime import datetime
 from typing import List, Optional, Sequence, Tuple
 
+from engine import booking
 from engine import repository
 from engine.match import create_match
 
@@ -101,6 +103,47 @@ def _resolve_alignment(team_a: Sequence[dict], team_b: Sequence[dict], *, is_tag
     return face, heel, assigned_roles
 
 
+def _parse_belt_list(raw_value) -> List[str]:
+    belts = _parse_identifier_list(raw_value)
+    return [belt for belt in belts if belt]
+
+
+def _build_booking_context(args, assigned_roles: dict, match_type: str) -> booking.MatchBookingContext | None:
+    event_name = getattr(args, "event_name", None)
+    storyline_id = getattr(args, "storyline_id", None)
+    belts = _parse_belt_list(getattr(args, "belts", None))
+    if not event_name and not storyline_id and not belts:
+        return None
+
+    state = booking.load_state()
+    event_id = None
+    match_id = None
+    if event_name:
+        normalized = event_name.lower()
+        raw_event = next((e for e in state.get("events", []) if e.get("name", "").lower() == normalized), None)
+        if raw_event:
+            event = booking.EventCard.from_dict(raw_event)
+        else:
+            event = booking.EventCard(
+                name=event_name,
+                date=getattr(args, "event_date", None) or datetime.utcnow().strftime("%Y-%m-%d"),
+                venue=getattr(args, "event_venue", "") or "",
+            )
+            booking.upsert_event(event)
+        event_id = event.id
+        card_match = booking.CardMatch(
+            match_type=match_type,
+            face_side=assigned_roles.get("Face", []),
+            heel_side=assigned_roles.get("Heel", []),
+            belts=belts,
+            storyline_id=storyline_id,
+        )
+        booking.add_match_to_event(event_id, card_match)
+        match_id = card_match.id
+
+    return booking.MatchBookingContext(event_id=event_id, match_id=match_id, storyline_id=storyline_id, belts=belts)
+
+
 def _build_match_from_args(args, wrestlers: Sequence[dict], game_data: dict):
     team_a_ids = _parse_identifier_list(args.team_a)
     team_b_ids = _parse_identifier_list(args.team_b)
@@ -123,7 +166,10 @@ def _build_match_from_args(args, wrestlers: Sequence[dict], game_data: dict):
     if match_type not in available_types:
         raise ValueError(f"Unknown match type '{match_type}'. Available types: {', '.join(sorted(available_types))}")
 
-    return create_match(face_team, heel_team, match_type, game_data, assigned_roles=assigned_roles, tag_match=is_tag)
+    booking_context = _build_booking_context(args, assigned_roles, match_type)
+    return create_match(
+        face_team, heel_team, match_type, game_data, assigned_roles=assigned_roles, tag_match=is_tag, booking_context=booking_context
+    )
 
 
 def _build_argument_parser():
@@ -159,6 +205,11 @@ def _build_argument_parser():
     event_parser.add_argument("--date", help="Optional date string.")
     event_parser.add_argument("--location", help="Optional location description.")
     event_parser.add_argument("--details", help="Additional JSON payload to merge into the event.")
+    parser.add_argument("--event-name", help="Optional event name to attach the simulated match to.")
+    parser.add_argument("--event-date", help="Event date when logging a match outcome.")
+    parser.add_argument("--event-venue", help="Venue name when logging a match outcome.")
+    parser.add_argument("--storyline-id", help="Attach the match to an existing storyline id for booking timeline tracking.")
+    parser.add_argument("--belts", help="Comma-separated or JSON array of belts on the line.")
     return parser
 
 def main():
