@@ -16,7 +16,7 @@ class Match:
         if isinstance(advanced_rules_config, AdvancedRulesConfig):
             self.advanced_config = advanced_rules_config
         else:
-            self.advanced_config = AdvancedRulesConfig(**(advanced_rules_config or {}))
+            self.advanced_config = AdvancedRulesConfig.from_dict(advanced_rules_config or {})
         self.advanced_rules = AdvancedRulesEngine(self.wrestlers_file, self.advanced_config) if self.advanced_config.enabled else None
 
     def simulate(self):

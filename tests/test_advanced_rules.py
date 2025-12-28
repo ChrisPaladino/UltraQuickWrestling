@@ -205,6 +205,98 @@ class AdvancedRulesTests(unittest.TestCase):
             self.assertEqual(updated_face["heat_modifier"], 6)  # +2 base +4 rivalry
             self.assertEqual(updated_heel["heat_modifier"], -4)  # -2 base + -2 rivalry
 
+    def test_persistent_modifiers_can_be_disabled(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            face = {
+                "name": "Face One",
+                "persona": "Face",
+                "overall": 1000,
+                "overall_modifier": 0,
+                "titles": [],
+                "rivalry_id": "R1",
+                "heat_modifier": 0,
+            }
+            heel = {
+                "name": "Heel One",
+                "persona": "Heel",
+                "overall": 900,
+                "overall_modifier": 0,
+                "titles": [],
+                "rivalry_id": "R1",
+                "heat_modifier": 0,
+            }
+            roster_path = self._build_roster([face, heel], tmpdir)
+            match = self._build_match(
+                face,
+                heel,
+                roster_path,
+                {
+                    "enabled": True,
+                    "enable_persistent_modifiers": False,
+                    "clean_win_bonus": 10,
+                    "clean_loss_penalty": 5,
+                    "injury_chance": 0,
+                    "enable_seasons": False,
+                },
+            )
+
+            with patch("random.randint", side_effect=[1, 0, 1, 1, 1]):
+                _ = match.simulate()
+
+            with open(roster_path) as f:
+                updated = json.load(f)
+            updated_face = next(w for w in updated["wrestlers"] if w["name"] == "Face One")
+            updated_heel = next(w for w in updated["wrestlers"] if w["name"] == "Heel One")
+            self.assertEqual(updated_face["heat_modifier"], 0)
+            self.assertEqual(updated_heel["heat_modifier"], 0)
+            self.assertEqual(updated_face.get("overall_modifier", 0), 0)
+            self.assertEqual(updated_heel.get("overall_modifier", 0), 0)
+
+    def test_heat_on_title_changes_alias_is_respected(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            face = {
+                "name": "Face One",
+                "persona": "Face",
+                "overall": 1100,
+                "overall_modifier": 0,
+                "titles": ["World"],
+                "heat_modifier": 0,
+            }
+            heel = {
+                "name": "Heel One",
+                "persona": "Heel",
+                "overall": 900,
+                "overall_modifier": 0,
+                "titles": [],
+                "heat_modifier": 0,
+            }
+            roster_path = self._build_roster([face, heel], tmpdir)
+            match = self._build_match(
+                face,
+                heel,
+                roster_path,
+                {
+                    "enabled": True,
+                    "title_on_the_line": "World",
+                    "title_overall_bonus": 5,
+                    "heat_on_title_changes": False,
+                    "enable_seasons": False,
+                    "enable_heat": True,
+                    "injury_chance": 0,
+                },
+            )
+
+            with patch("random.randint", side_effect=[1, 0, 1, 1, 1]):
+                _ = match.simulate()
+
+            with open(roster_path) as f:
+                updated = json.load(f)
+
+            updated_face = next(w for w in updated["wrestlers"] if w["name"] == "Face One")
+            self.assertEqual(updated_face.get("overall_modifier", 0), 5)
+            self.assertEqual(updated_face.get("title_heat_bonus_applied", 0), 0)
+            self.assertEqual(updated_face.get("heat_modifier", 0), 5)
+
 
 if __name__ == "__main__":
     unittest.main()

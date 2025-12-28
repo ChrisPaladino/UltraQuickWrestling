@@ -87,6 +87,11 @@ config = {
   "title_on_the_line": "World Championship",  # optional
   "injury_chance": 0.15,
   "enable_seasons": True,
+  "enable_persistent_modifiers": True,        # optional; defaults to True
+  "clean_win_bonus": 5,
+  "clean_loss_penalty": 5,
+  "title_overall_bonus": 5,
+  "heat_on_title_changes": True,
 }
 match = Match(face_data, heel_data, match_type, game_data, assigned_roles, advanced_rules_config=config)
 ```
@@ -100,8 +105,15 @@ If `enabled` is `False` or omitted, core rules run unchanged.
 - `enable_rivalries` (default `True`): When both wrestlers share `rivalry_id`, apply rivalry heat bonuses/penalties.
 - `enable_heat` (default `True`): Persist `heat_modifier` changes per match and factor them into ratings.
 - `enable_seasons` (default `True`): Track `season.current_week`/`season.length` in `data/wrestlers.json`.
+- `enable_persistent_modifiers` (default `True`): Allow permanent modifiers to be written/read. Turn this off to disable rivalry heat swings, clean-finish bonuses/penalties, title sync bonuses, and ongoing heat deltas even while other advanced hooks stay active.
 
 Other tunables include `injury_penalty`, `injury_duration`, `rivalry_heat_bonus`, `rivalry_heat_penalty`, and `base_heat_delta`.
+
+#### Persistent modifiers
+
+- Clean finishes can apply overall changes (`clean_win_bonus`, `clean_loss_penalty`), and champions can gain an overall boost (`title_overall_bonus`) and optional Heat delta (`heat_on_title_changes`/`heat_change_on_titles`). These are saved to `overall_modifier`/`heat_modifier`.
+- Defaults mirror the existing behavior: persistence is on, clean bonuses/penalties are `0` (off), `title_overall_bonus` is `0` (off), and `heat_on_title_changes` is `True`.
+- Persistent modifiers share the same `data/wrestlers.json` storage that `enable_seasons` uses. You can run persistent modifiers with or without seasons enabled; turning seasons off does not disable modifier persistence.
 
 ### Persisted Data
 
