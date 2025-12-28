@@ -1,6 +1,9 @@
 import json
 import os
 
+from engine.game_data import normalize_game_data
+
+
 def load_json(filename):
     base_dir = os.path.dirname(os.path.dirname(__file__))  # Up from /engine/
     filepath = os.path.join(base_dir, "data", filename)
@@ -12,4 +15,5 @@ def load_wrestlers():
     return data["wrestlers"]
 
 def load_game_data():
-    return load_json("game_data.json")
+    raw_data = load_json("game_data.json")
+    return normalize_game_data(raw_data)
