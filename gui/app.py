@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from engine import data_loader
+from engine import repository
 from engine.match import create_match
 
 
@@ -10,9 +10,9 @@ class DataStore:
         self.reload()
 
     def reload(self):
-        self.wrestlers = data_loader.load_wrestlers()
-        self.belts = data_loader.load_belts()
-        self.game_data = data_loader.load_game_data()
+        self.wrestlers = repository.load_wrestlers()
+        self.belts = repository.load_belts()
+        self.game_data = repository.load_game_data()
 
     def wrestler_names(self):
         return [w.get("name", "") for w in self.wrestlers]
@@ -52,22 +52,19 @@ class DataStore:
         }
 
     def add_wrestler(self, name, persona, finisher, overall):
-        for wrestler in self.wrestlers:
-            if wrestler.get("name", "").lower() == name.lower():
-                raise ValueError(f"Wrestler named '{name}' already exists.")
         new_wrestler = self._baseline_wrestler(name, persona, finisher, overall)
-        self.wrestlers.append(new_wrestler)
-        data_loader.save_wrestlers(self.wrestlers)
+        repository.create_wrestler(new_wrestler)
+        self.reload()
 
     def update_wrestler(self, existing_name, persona, finisher, overall):
-        for wrestler in self.wrestlers:
-            if wrestler.get("name") == existing_name:
-                wrestler["persona"] = persona or wrestler.get("persona")
-                wrestler["finisher"] = finisher if finisher is not None else wrestler.get("finisher", "")
-                wrestler["overall"] = int(overall)
-                data_loader.save_wrestlers(self.wrestlers)
-                return
-        raise ValueError(f"Wrestler '{existing_name}' not found.")
+        updates = {
+            "persona": persona or None,
+            "finisher": finisher if finisher is not None else None,
+            "overall": int(overall),
+        }
+        cleaned_updates = {k: v for k, v in updates.items() if v is not None}
+        repository.update_wrestler(existing_name, cleaned_updates)
+        self.reload()
 
     def add_belt(self, name, holder, prestige):
         for belt in self.belts:
@@ -80,14 +77,14 @@ class DataStore:
                 "prestige": int(prestige),
             }
         )
-        data_loader.save_belts(self.belts)
+        repository.save_belts(self.belts)
 
     def update_belt(self, existing_name, holder, prestige):
         for belt in self.belts:
             if belt.get("name") == existing_name:
                 belt["current_holder"] = holder or ""
                 belt["prestige"] = int(prestige)
-                data_loader.save_belts(self.belts)
+                repository.save_belts(self.belts)
                 return
         raise ValueError(f"Belt '{existing_name}' not found.")
 
