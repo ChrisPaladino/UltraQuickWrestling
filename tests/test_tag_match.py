@@ -97,6 +97,73 @@ class TagMatchTests(unittest.TestCase):
 
         self.assertIsInstance(match, TagMatch)
 
+    def test_tag_match_prefers_tag_charts(self):
+        face_team = [
+            {
+                "name": "Face One",
+                "persona": "Face",
+                "overall": 1000,
+                "overall_modifier": 0,
+                "attributes": {"tag": 0},
+                "heat_modifier": 0,
+                "titles": [],
+            },
+            {
+                "name": "Face Two",
+                "persona": "Face",
+                "overall": 1000,
+                "overall_modifier": 0,
+                "attributes": {"tag": 0},
+                "heat_modifier": 0,
+                "titles": [],
+            },
+        ]
+        heel_team = [
+            {
+                "name": "Heel One",
+                "persona": "Heel",
+                "overall": 1000,
+                "overall_modifier": 0,
+                "attributes": {"tag": 0},
+                "heat_modifier": 0,
+                "titles": [],
+            },
+            {
+                "name": "Heel Two",
+                "persona": "Heel",
+                "overall": 1000,
+                "overall_modifier": 0,
+                "attributes": {"tag": 0},
+                "heat_modifier": 0,
+                "titles": [],
+            },
+        ]
+
+        game_data = {
+            **self.base_game_data,
+            "tag_result_chart": [{"difference": "0-9999", "high_rated_wins": "1-20", "low_rated_wins": "21-100"}],
+            "tag_win_charts": {
+                "TV Taping": {
+                    "Face": [{"range": "1-100", "result": "Tag Clean Win"}],
+                    "Heel": [{"range": "1-100", "result": "Tag Clean Win"}],
+                }
+            },
+        }
+
+        match = TagMatch(
+            face_team,
+            heel_team,
+            "TV Taping",
+            game_data,
+            assigned_roles={"Face": ["Face One", "Face Two"], "Heel": ["Heel One", "Heel Two"]},
+        )
+
+        with patch("random.randint", side_effect=[1, 0, 1, 50, 1]):
+            log = match.simulate()
+
+        self.assertIn("Winner: Heel One & Heel Two (Heel)", log)
+        self.assertIn("Tag Clean Win", log)
+
 
 if __name__ == "__main__":
     unittest.main()

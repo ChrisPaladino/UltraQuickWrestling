@@ -65,6 +65,12 @@ class Match:
             return getattr(competitor, "member_names")
         return [competitor.name]
 
+    def _get_result_chart(self):
+        return self.game_data.get("result_chart", [])
+
+    def _get_win_chart_collection(self):
+        return self.game_data.get("win_charts", {})
+
     def _rating_components(self, competitor, modifier: str, adjustment: float):
         base = competitor.get_base_overall()
         mod_value = 0 if modifier == "normal" else competitor.get_attribute_value(modifier)
@@ -174,7 +180,7 @@ class Match:
         self.result_log.append(f"[DEBUG] Point difference: {diff}")
 
         odds = None
-        for entry in self.game_data["result_chart"]:
+        for entry in self._get_result_chart():
             range_str = entry.get("difference")
             if not range_str:
                 continue
@@ -199,7 +205,7 @@ class Match:
         self.result_log.append(f"Roll: {roll} → Winner: {winner.name} ({winner_type})")
 
         # Step 5: Post-Match Result
-        post_chart = self.game_data["win_charts"].get(self.match_type, {})
+        post_chart = self._get_win_chart_collection().get(self.match_type, {})
         post_results = post_chart.get(winner_type, [])
         post_roll = random.randint(1, 100)
         self.result_log.append(f"[DEBUG] Rolled d100 for post-match result: {post_roll}")
@@ -294,6 +300,12 @@ class TagMatch(Match):
         self.face = TagTeam(face_team_data, "Face")
         self.heel = TagTeam(heel_team_data, "Heel")
         self.assigned_roles = assigned_roles or {"Face": self.face.member_names, "Heel": self.heel.member_names}
+
+    def _get_result_chart(self):
+        return self.game_data.get("tag_result_chart") or super()._get_result_chart()
+
+    def _get_win_chart_collection(self):
+        return self.game_data.get("tag_win_charts") or super()._get_win_chart_collection()
 
     def _rating_components(self, competitor, modifier: str, adjustment: float):
         base = competitor.get_base_overall()
