@@ -1,11 +1,11 @@
 import json
 import os
 import random
-import tempfile
 from typing import Iterable, List, Sequence
 
 from engine.wrestler import Wrestler
 from engine.advanced_rules import AdvancedRulesEngine, AdvancedRulesConfig
+from engine.file_utils import safe_write_json
 
 
 class TagTeam:
@@ -257,21 +257,6 @@ class Match:
 
         return "\n".join(self.result_log)
 
-    @staticmethod
-    def _safe_write_json(filepath: str, data: dict) -> None:
-        directory = os.path.dirname(filepath) or "."
-        fd, tmp_path = tempfile.mkstemp(prefix="wrestlers_", suffix=".json", dir=directory)
-        try:
-            with os.fdopen(fd, "w") as tmp_file:
-                json.dump(data, tmp_file, indent=2)
-                tmp_file.flush()
-                os.fsync(tmp_file.fileno())
-            os.replace(tmp_path, filepath)
-        except Exception:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-            raise
-
     def apply_permanent_change(self, target_side, attribute, change):
         try:
             with open(self.wrestlers_file, "r") as f:
@@ -302,7 +287,7 @@ class Match:
                 missing = ", ".join(target_names)
                 raise ValueError(f"Wrestler named {missing} not found.")
 
-            self._safe_write_json(self.wrestlers_file, data)
+            safe_write_json(self.wrestlers_file, data)
         except Exception as e:
             self.result_log.append(f"[ERROR] Failed to update permanent change: {e}")
 
