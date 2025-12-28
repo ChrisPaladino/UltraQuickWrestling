@@ -1,6 +1,13 @@
+import sys
 import tkinter as tk
-from tkinter import messagebox, ttk
 from datetime import datetime
+from pathlib import Path
+from tkinter import messagebox, ttk
+
+CURRENT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = CURRENT_DIR.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from engine import booking, repository
 from engine.match import create_match
