@@ -79,8 +79,8 @@ class Match:
         # Step 3: Calculate match ratings (AFTER applying pre-match modifiers)
         base_face = getattr(self.face, 'overall', 0)
         base_heel = getattr(self.heel, 'overall', 0)
-        mod_face = self.face.get_attribute_bonus(modifier)
-        mod_heel = self.heel.get_attribute_bonus(modifier)
+        mod_face = 0 if modifier == "normal" else self.face.get_attribute_value(modifier)
+        mod_heel = 0 if modifier == "normal" else self.heel.get_attribute_value(modifier)
         adj_face = match_adjustment["Face"]
         adj_heel = match_adjustment["Heel"]
         rating_face = self.face.get_match_rating(modifier) + adj_face
