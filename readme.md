@@ -71,6 +71,51 @@ Advanced and supplemental rules are partially implemented or planned.
 
 ---
 
+## ⚙️ Optional & Advanced Rules
+
+Advanced rule handling lives in `engine/advanced_rules.py` and can be toggled when creating a `Match`. These hooks cover persistent Heat changes, rivalry escalation, injury penalties/recovery, title swaps, and simple season ticking.
+
+### Enabling
+
+Pass an `advanced_rules_config` dictionary (or `AdvancedRulesConfig`) into `Match`:
+
+```python
+from engine.match import Match
+
+config = {
+  "enabled": True,
+  "title_on_the_line": "World Championship",  # optional
+  "injury_chance": 0.15,
+  "enable_seasons": True,
+}
+match = Match(face_data, heel_data, match_type, game_data, assigned_roles, advanced_rules_config=config)
+```
+
+If `enabled` is `False` or omitted, core rules run unchanged.
+
+### Available Toggles
+
+- `enable_injuries` (default `True`): Apply injury penalties, decrement durations, and add new injuries based on `injury_chance`.
+- `enable_titles` (default `True`): Move `title_on_the_line` between competitors.
+- `enable_rivalries` (default `True`): When both wrestlers share `rivalry_id`, apply rivalry heat bonuses/penalties.
+- `enable_heat` (default `True`): Persist `heat_modifier` changes per match and factor them into ratings.
+- `enable_seasons` (default `True`): Track `season.current_week`/`season.length` in `data/wrestlers.json`.
+
+Other tunables include `injury_penalty`, `injury_duration`, `rivalry_heat_bonus`, `rivalry_heat_penalty`, and `base_heat_delta`.
+
+### Persisted Data
+
+`data/wrestlers.json` now carries optional fields per wrestler:
+
+- `titles`: list of championships held
+- `rivalry_id`: identifier string shared by opponents in a feud
+- `heat_modifier`: persistent heat delta applied to match ratings
+- `injured` / `injury_duration`: injury tracking (backward compatible defaults provided)
+
+A top-level `season` block (`length`, `current_week`) tracks booking seasons when enabled.
+
+---
+
 ## 📚 Reference
 
 - All rules implemented based on *Ultra Quick Wrestling* by Downey Games (© 2005)

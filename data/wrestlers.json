@@ -27,7 +27,10 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     },
     {
       "name": "Diabolica",
@@ -56,7 +59,10 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     },
     {
       "name": "Brook Buchanan",
@@ -85,7 +91,10 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     },
     {
       "name": "Candy Crush",
@@ -114,7 +123,10 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     },
     {
       "name": "Cassie Crush",
@@ -143,7 +155,10 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     },
     {
       "name": "Crimson Queen",
@@ -172,7 +187,10 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     },
     {
       "name": "Gwendolyn Graves",
@@ -201,7 +219,10 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     },
     {
       "name": "Zuva",
@@ -230,7 +251,10 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     },
     {
       "name": "Viper Rose",
@@ -259,7 +283,10 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     },
     {
       "name": "Valkyrie",
@@ -288,7 +315,14 @@
         "draws": 0
       },
       "injured": false,
-      "injury_duration": 0
+      "injury_duration": 0,
+      "titles": [],
+      "rivalry_id": null,
+      "heat_modifier": 0
     }
-  ]
+  ],
+  "season": {
+    "length": 12,
+    "current_week": 1
+  }
 }

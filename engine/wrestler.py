@@ -32,6 +32,9 @@ class Wrestler:
         "record",
         "injured",
         "injury_duration",
+        "titles",
+        "rivalry_id",
+        "heat_modifier",
     }
 
     def __init__(self, data: dict):

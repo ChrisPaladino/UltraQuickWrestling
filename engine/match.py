@@ -3,15 +3,21 @@ import os
 import random
 import tempfile
 from engine.wrestler import Wrestler
+from engine.advanced_rules import AdvancedRulesEngine, AdvancedRulesConfig
 
 class Match:
-    def __init__(self, wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles, wrestlers_file="data/wrestlers.json"):
+    def __init__(self, wrestler_a_data, wrestler_b_data, match_type, game_data, assigned_roles, wrestlers_file="data/wrestlers.json", advanced_rules_config=None):
         self.face = Wrestler(wrestler_a_data if assigned_roles['Face'] == wrestler_a_data['name'] else wrestler_b_data)
         self.heel = Wrestler(wrestler_b_data if self.face.name == wrestler_a_data['name'] else wrestler_a_data)
         self.match_type = match_type
         self.game_data = game_data
         self.result_log = []
         self.wrestlers_file = wrestlers_file
+        if isinstance(advanced_rules_config, AdvancedRulesConfig):
+            self.advanced_config = advanced_rules_config
+        else:
+            self.advanced_config = AdvancedRulesConfig(**(advanced_rules_config or {}))
+        self.advanced_rules = AdvancedRulesEngine(self.wrestlers_file, self.advanced_config) if self.advanced_config.enabled else None
 
     def simulate(self):
         self.result_log.clear()
@@ -59,6 +65,10 @@ class Match:
 
         effect = pre_event.get("effect")
         match_adjustment = {"Face": 0, "Heel": 0}
+        if self.advanced_rules:
+            advanced_adjustment = self.advanced_rules.apply_pre_match(self.face.name, self.heel.name, self.result_log)
+            for side, delta in advanced_adjustment.items():
+                match_adjustment[side] += delta
         if effect:
             attr = Wrestler.normalize_attribute_name(effect.get("attribute", ""))
             change = effect.get("change")
@@ -148,6 +158,10 @@ class Match:
                 self.result_log.append(f"Unusual Event: {desc.format(wrestler=winner.name)}")
             else:
                 self.result_log.append("[DEBUG] No unusual results available.")
+
+        if self.advanced_rules:
+            winner_name = winner.name
+            self.advanced_rules.apply_post_match(self.face.name, self.heel.name, winner_name, self.match_type, self.result_log)
 
         return "\n".join(self.result_log)
 
