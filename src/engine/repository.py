@@ -12,11 +12,11 @@ from pathlib import Path
 import uuid
 from typing import Any, Dict, List, Tuple
 
-from engine.file_utils import safe_write_json
-from engine.game_data import normalize_game_data
+from .file_utils import safe_write_json
+from .game_data import normalize_game_data
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = BASE_DIR / "data"
 
 

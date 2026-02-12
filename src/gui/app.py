@@ -3,19 +3,27 @@ import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from tkinter import messagebox, ttk
+from typing import Any, Dict, List, Optional, cast
 
 CURRENT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = CURRENT_DIR.parent
+PROJECT_ROOT = CURRENT_DIR.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from engine import booking, repository
-from engine.advanced_rules import AdvancedRulesConfig
-from engine.match import create_match
+from src.engine import booking, repository
+from src.engine.advanced_rules import AdvancedRulesConfig
+from src.engine.match import create_match
 
 
 class DataStore:
     def __init__(self):
+        self.wrestlers: List[dict] = []
+        self.belts: List[dict] = []
+        self.game_data: Dict[str, Any] = {}
+        self.booking_state: Dict[str, Any] = {}
+        self.events: List[dict] = []
+        self.storylines: List[dict] = []
+        self.timeline: List[dict] = []
         self.reload()
 
     def reload(self):
@@ -23,9 +31,9 @@ class DataStore:
         self.belts = repository.load_belts()
         self.game_data = repository.load_game_data()
         self.booking_state = booking.load_state()
-        self.events = self.booking_state.get("events", [])
-        self.storylines = self.booking_state.get("storylines", [])
-        self.timeline = self.booking_state.get("timeline", [])
+        self.events = cast(List[dict], self.booking_state.get("events", []))
+        self.storylines = cast(List[dict], self.booking_state.get("storylines", []))
+        self.timeline = cast(List[dict], self.booking_state.get("timeline", []))
 
     def wrestler_names(self):
         return sorted([w.get("name", "") for w in self.wrestlers], key=lambda name: name.lower())
@@ -59,7 +67,8 @@ class DataStore:
         event = self.get_event_by_id(event_id)
         if not event:
             return None
-        return next((m for m in event.get("matches", []) if m.get("id") == match_id), None)
+        matches = event.get("matches", []) if isinstance(event, dict) else []
+        return next((m for m in matches if m.get("id") == match_id), None)
 
     def create_event(self, name: str, date: str, venue: str):
         event = booking.EventCard(name=name, date=date or datetime.utcnow().strftime("%Y-%m-%d"), venue=venue or "")
@@ -732,10 +741,15 @@ class BookingPanel(ttk.Frame):
         belt_indices = self.card_belts_list.curselection()
         belts = [self.card_belts_list.get(i) for i in belt_indices]
 
+        event_id = str(event.get("id", "")) if isinstance(event, dict) else ""
+        if not event_id:
+            messagebox.showerror("Error", "Invalid event ID")
+            return
+
         try:
             if self._editing_match_id:
                 self.datastore.update_match_in_event(
-                    event.get("id"),
+                    event_id,
                     self._editing_match_id,
                     face_side,
                     heel_side,
@@ -746,7 +760,7 @@ class BookingPanel(ttk.Frame):
                 message = "Match updated on event card."
             else:
                 created = self.datastore.add_match_to_event(
-                    event.get("id"), face_side, heel_side, match_type, belts=belts, storyline_id=storyline_id
+                    event_id, face_side, heel_side, match_type, belts=belts, storyline_id=storyline_id
                 )
                 self._editing_match_id = created.id
                 message = "Match added to event card."
@@ -1209,7 +1223,7 @@ class MatchPanel(ttk.Frame):
         if heel_side:
             self.heel_var.set(self._label_for_name(heel_side[0]))
         if match.get("match_type"):
-            self.match_type_var.set(match.get("match_type"))
+            self.match_type_var.set(str(match.get("match_type", "")))
         self._set_belt_selection(match.get("belts", []))
         storyline_id = match.get("storyline_id")
         storyline = next((s for s in self.datastore.storylines if s.get("id") == storyline_id), None)
@@ -1227,9 +1241,11 @@ class MatchPanel(ttk.Frame):
         event = self.datastore.get_event_by_name(self.event_var.get().strip()) if self.event_var.get() else None
         if not event:
             return
-        match = self.datastore.get_match_from_event(event.get("id"), self._selected_match_id)
-        if match:
-            self._apply_match_to_form(match)
+        event_id = str(event.get("id", "")) if isinstance(event, dict) else ""
+        if event_id and self._selected_match_id:
+            match = self.datastore.get_match_from_event(event_id, self._selected_match_id)
+            if match:
+                self._apply_match_to_form(match)
 
     def refresh(self):
         roster_labels = self._roster_labels()
@@ -1283,18 +1299,25 @@ class MatchPanel(ttk.Frame):
         assigned_roles = {"Face": [face_name], "Heel": [heel_name]}
         event_name = self.event_var.get().strip()
         storyline_name = self.storyline_var.get().strip()
-        storyline_id = None
+        storyline_id: Optional[str] = None
         if storyline_name:
             storyline = next((s for s in self.datastore.storylines if s.get("name") == storyline_name), None)
             if not storyline:
-                storyline = self.datastore.create_storyline(storyline_name, assigned_roles["Face"] + assigned_roles["Heel"])
-            storyline_id = storyline.get("id")
+                storyline_obj = self.datastore.create_storyline(storyline_name, assigned_roles["Face"] + assigned_roles["Heel"])
+                storyline_id = str(getattr(storyline_obj, 'id', ''))
+            else:
+                storyline_id = str(storyline.get("id", ""))
         event = self.datastore.get_event_by_name(event_name) if event_name else None
         if event_name and not event:
             event = self.datastore.create_event(event_name, datetime.utcnow().strftime("%Y-%m-%d"), "")
         match_card_id = None
-        event_id = event.get("id") if event else None
+        event_id: Optional[str] = None
         if event:
+            if isinstance(event, dict):
+                event_id = str(event.get("id", ""))
+            else:
+                event_id = str(getattr(event, 'id', ''))
+        if event and event_id:
             try:
                 if self._selected_match_id:
                     self.datastore.update_match_in_event(

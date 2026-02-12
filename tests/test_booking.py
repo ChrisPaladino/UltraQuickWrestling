@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from engine import booking
+from src.engine import booking
 
 
 class BookingContextTests(unittest.TestCase):

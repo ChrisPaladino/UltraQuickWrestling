@@ -1,11 +1,11 @@
 import argparse
 import json
 from datetime import datetime
-from typing import List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple, cast
 
-from engine import booking
-from engine import repository
-from engine.match import create_match
+from src.engine import booking
+from src.engine import repository
+from src.engine.match import create_match
 
 def choose_wrestler(wrestlers, role):
     print(f"\nSelect {role.upper()}:")
@@ -120,7 +120,8 @@ def _build_booking_context(args, assigned_roles: dict, match_type: str) -> booki
     match_id = None
     if event_name:
         normalized = event_name.lower()
-        raw_event = next((e for e in state.get("events", []) if e.get("name", "").lower() == normalized), None)
+        events_list = cast(List[dict], state.get("events", []))
+        raw_event = next((e for e in events_list if e.get("name", "").lower() == normalized), None)
         if raw_event:
             event = booking.EventCard.from_dict(raw_event)
         else:

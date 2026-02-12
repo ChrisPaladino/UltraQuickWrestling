@@ -4,8 +4,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from engine.match import Match
-from engine.wrestler import Wrestler
+from src.engine.match import Match
+from src.engine.wrestler import Wrestler
 
 
 class MatchModifierTests(unittest.TestCase):

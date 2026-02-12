@@ -3,10 +3,10 @@ import os
 import random
 from typing import Iterable, List, Sequence
 
-from engine.booking import MatchBookingContext
-from engine.wrestler import Wrestler
-from engine.advanced_rules import AdvancedRulesEngine, AdvancedRulesConfig
-from engine.file_utils import safe_write_json
+from .booking import MatchBookingContext
+from .wrestler import Wrestler
+from .advanced_rules import AdvancedRulesEngine, AdvancedRulesConfig
+from .file_utils import safe_write_json
 
 
 class TagTeam:

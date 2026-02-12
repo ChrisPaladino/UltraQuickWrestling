@@ -1,7 +1,7 @@
 import copy
 import pytest
 
-from engine.game_data import normalize_game_data
+from src.engine.game_data import normalize_game_data
 
 
 def _base_payload():

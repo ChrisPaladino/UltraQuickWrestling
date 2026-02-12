@@ -5,7 +5,7 @@ import unittest
 from copy import deepcopy
 from unittest.mock import patch
 
-from engine.match import TagMatch, create_match
+from src.engine.match import TagMatch, create_match
 
 
 class TagMatchTests(unittest.TestCase):

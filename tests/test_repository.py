@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from engine import repository
+from src.engine import repository
 
 
 @pytest.fixture()

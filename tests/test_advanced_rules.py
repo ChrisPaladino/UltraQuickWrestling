@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from engine.match import Match
+from src.engine.match import Match
 
 
 class AdvancedRulesTests(unittest.TestCase):
