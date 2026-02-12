@@ -3,6 +3,7 @@
 A Python simulation of **Ultra Quick Wrestling**, the fast-paced 1991-themed pro wrestling game originally published by Downey Games. This version recreates the action using real wrestler stats, dynamic match types, and storytelling logic pulled straight from the rulebook.
 
 **Features:**
+
 - ✅ Complete match simulation engine with all official UQW rules
 - ✅ Tag team matches (2v2, 3v3, any combination)
 - ✅ Advanced rules: injuries, championships, heat/momentum, rivalries, seasons
@@ -15,8 +16,7 @@ A Python simulation of **Ultra Quick Wrestling**, the fast-paced 1991-themed pro
 
 ## 📦 Project Structure
 
-```
-UltraQuickWrestling/
+```UltraQuickWrestling/
 ├── main.py              # Console CLI entry point
 ├── data/                # Game data and wrestler rosters (JSON)
 ├── src/                 # Source code
@@ -43,17 +43,20 @@ UltraQuickWrestling/
 ### Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/yourusername/UltraQuickWrestling.git
    cd UltraQuickWrestling
    ```
 
 2. **Run the CLI:**
+
    ```bash
    python main.py
    ```
 
 3. **Or launch the GUI:**
+
    ```bash
    python -m src.gui.app
    ```
@@ -61,16 +64,19 @@ UltraQuickWrestling/
 ### Basic Usage (CLI)
 
 **Interactive mode** - Follow prompts to select wrestlers and match type:
+
 ```bash
 python main.py
 ```
 
 **Quick match** - Command-line arguments:
+
 ```bash
 python main.py --wrestler-a "Hulk Hogan" --wrestler-b "Randy Savage" --match-type "PPV"
 ```
 
 **Tag team match:**
+
 ```bash
 python main.py --tag \
   --team-a "Bret Hart,Jim Neidhart" \
@@ -267,5 +273,4 @@ This project is a fan-made recreation of Ultra Quick Wrestling for educational a
 
 ---
 
-**Happy Wrestling! 🤼**
-
+Happy Wrestling!
